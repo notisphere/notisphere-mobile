@@ -1,22 +1,68 @@
 // Core components
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
+// Hooks
+import { useEffect, useState, useCallback } from 'react';
 // Components
 import { Chip } from '@/src/components/chip';
 // Types
 import { NotesStackScreenProps } from '@/src/types/navigation';
-// Mocks
-import { mockNotes } from '@/src/data/mock-notes';
+import { Note } from '@/src/types/note';
+// Database
+import { getNoteById, deleteNote } from '@/src/db/notesRepository';
+import { confirmAction } from '@/src/utils/confirm';
 
 export const NoteDetailsScreen = (props: NotesStackScreenProps<'NoteDetails'>) => {
   const { route, navigation } = props;
-
   const { noteId } = route.params;
-  const note = mockNotes.find((n) => n.id === noteId);
+
+  const [note, setNote] = useState<Note | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // 👇 Оборачиваем загрузку в useCallback для стабильной ссылки
+  const loadNote = useCallback(async () => {
+    try {
+      const dbNote = await getNoteById(noteId);
+      setNote(dbNote);
+    } catch (error) {
+      console.error('Ошибка загрузки заметки:', error);
+      Alert.alert('Ошибка', 'Не удалось загрузить заметку');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [noteId]); // 👈 noteId в зависимостях
+
+  // 👇 Инициализация с void для ESLint
+  useEffect(() => {
+    const onLoad = async () => {
+      await loadNote();
+    };
+    void onLoad();
+  }, [loadNote]);
+
+  const handleDelete = async () => {
+    confirmAction('Удаление', 'Вы уверены, что хотите удалить эту заметку?', async () => {
+      try {
+        await deleteNote(noteId);
+        navigation.goBack();
+      } catch (error) {
+        console.error('Ошибка удаления заметки:', error);
+        alert('Не удалось удалить заметку');
+      }
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <Text>Загрузка...</Text>
+      </View>
+    );
+  }
 
   if (!note) {
     return (
       <View style={styles.container}>
-        <Text>Нет данных</Text>
+        <Text>Заметка не найдена</Text>
       </View>
     );
   }
@@ -30,16 +76,23 @@ export const NoteDetailsScreen = (props: NotesStackScreenProps<'NoteDetails'>) =
 
       <Text style={styles.sectionTitle}>Вложения</Text>
       <View style={styles.row}>
-        {attachment.photo ? <Chip label="Фото" /> : <Chip label="Фото (нет)" />}
-        {attachment.audio ? <Chip label="Аудио" /> : <Chip label="Аудио (нет)" />}
-        {attachment.location ? <Chip label="Гео" /> : <Chip label="Гео (нет)" />}
+        <Chip label={attachment?.photo ? 'Фото' : 'Фото (нет)'} />
+        <Chip label={attachment?.audio ? 'Аудио' : 'Аудио (нет)'} />
+        <Chip label={attachment?.location ? 'Гео' : 'Гео (нет)'} />
       </View>
 
       <Pressable
-        onPress={() => navigation.navigate('NoteEditor', { mode: 'edit', noteId: note?.id })}
+        onPress={() => navigation.navigate('NoteEditor', { mode: 'edit', noteId: note.id! })}
         style={({ pressed }) => [styles.btn, pressed && { opacity: 0.7 }]}
       >
         <Text style={styles.btnText}>Редактировать</Text>
+      </Pressable>
+
+      <Pressable
+        onPress={handleDelete}
+        style={({ pressed }) => [styles.deleteBtn, pressed && { opacity: 0.7 }]}
+      >
+        <Text style={styles.deleteBtnText}>Удалить</Text>
       </Pressable>
     </View>
   );
@@ -60,4 +113,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   btnText: { fontWeight: '800' },
+  deleteBtn: {
+    marginTop: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#ff3b30',
+    padding: 12,
+    alignItems: 'center',
+  },
+  deleteBtnText: { fontWeight: '800', color: '#ff3b30' },
 });

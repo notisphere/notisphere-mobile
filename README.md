@@ -1,50 +1,201 @@
-# Welcome to your Expo app 👋
+# Notisphere Mobile App 📱
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Умное приложение для создания и управления заметками с использованием SQLite для локального хранения данных.
 
-## Get started
+## Особенности
 
-1. Install dependencies
+- ✅ **SQLite БД** - локальное хранилище с 3 таблицами (notes, attachments, app_state)
+- ✅ **Сохранение состояния** - автоматическое восстановление при запуске приложения
+- ✅ **Синхронизация** - состояние сохраняется и восстанавливается на различных устройствах
+- ✅ **Примеры заметок** - автоматическое заполнение БД при первом запуске
+- ✅ **TypeScript** - полная типизация
+- ✅ **React Navigation** - современная навигация
+
+## Структура проекта
+
+```
+notisphere-mobile/
+├── src/
+│   ├── db/                          # Модуль БД и управления состоянием
+│   │   ├── database.ts              # Инициализация и создание таблиц
+│   │   ├── notesRepository.ts       # CRUD операции с заметками
+│   │   ├── stateManager.ts          # Сохранение и загрузка состояния
+│   │   ├── seedDatabase.ts          # Заполнение БД примерами
+│   │   ├── useAppInitialization.ts  # Хук инициализации при запуске
+│   │   └── EXAMPLES.ts              # Примеры использования
+│   ├── components/                  # React компоненты
+│   ├── screens/                     # Экраны приложения
+│   ├── navigation/                  # Навигация
+│   ├── types/                       # TypeScript типы
+│   └── data/                        # Моки и статические данные
+├── DATABASE.md                      # Полная документация по БД
+└── package.json
+```
+
+## Быстрый старт
+
+1. **Установка зависимостей**
 
    ```bash
    npm install
    ```
 
-2. Start the app
+2. **Запуск приложения**
 
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+3. **В эмуляторе/телефоне**
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+   ```bash
+   # Android
+   npm run android
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+   # iOS
+   npm run ios
 
-## Get a fresh project
+   # Web
+   npm run web
+   ```
 
-When you're ready, run:
+## База данных
+
+### Таблицы
+
+1. **notes** - заметки (id, title, text, createdAt, updatedAt)
+2. **attachments** - вложения (id, noteId, photo, audio, location)
+3. **app_state** - состояние приложения (id, key, value, updatedAt)
+
+### Инициализация при запуске
+
+При запуске приложения автоматически:
+1. Инициализируется БД с созданием всех таблиц
+2. Заполняются примеры заметок (первый запуск)
+3. Восстанавливается сохраненное состояние
+4. Загружаются все заметки
+
+📖 **Полная документация:** [DATABASE.md](./DATABASE.md)
+
+## API Функции
+
+### Работа с заметками
+
+```typescript
+import { 
+  saveNote, 
+  getAllNotes, 
+  getNoteById, 
+  deleteNote 
+} from '@/src/db/notesRepository';
+
+// Загрузить все заметки
+const notes = await getAllNotes();
+
+// Получить заметку по ID
+const note = await getNoteById(1);
+
+// Сохранить заметку
+await saveNote(note);
+
+// Удалить заметку
+await deleteNote(1);
+```
+
+### Управление состоянием
+
+```typescript
+import { 
+  saveAppState, 
+  getAppState, 
+  deleteAppState 
+} from '@/src/db/stateManager';
+
+// Сохранить состояние
+await saveAppState('myState', { counter: 42 });
+
+// Загрузить состояние
+const state = await getAppState('myState');
+
+// Удалить состояние
+await deleteAppState('myState');
+```
+
+## Примеры использования
+
+Смотрите [src/db/EXAMPLES.ts](./src/db/EXAMPLES.ts) для подробных примеров:
+
+- Загрузка заметок
+- Создание новой заметки
+- Обновление заметки
+- Удаление заметки
+- Сохранение состояния
+- Синхронизация состояния
+
+## Зависимости
+
+- `expo` - фреймворк для React Native
+- `expo-sqlite` - работа с SQLite БД
+- `@react-navigation/*` - навигация
+- `react-native` - основной фреймворк
+
+## Скрипты
 
 ```bash
+# Запуск приложения
+npm start
+
+# Линтинг кода
+npm run lint
+
+# Исправление линтинга
+npm run lint:fix
+
+# Форматирование кода
+npm run format
+
+# Очистка и сброс проекта
 npm run reset-project
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Разработка
 
-## Learn more
+### Добавление новой таблицы в БД
 
-To learn more about developing your project with Expo, look at the following resources:
+1. Отредактируйте `src/db/database.ts`
+2. Добавьте `tx.executeSql()` в функцию `initDatabase()`
+3. Создайте функции для работы с новой таблицей
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Добавление нового состояния
 
-## Join the community
+```typescript
+// В компоненте или хуке
+import { saveAppState, getAppState } from '@/src/db/stateManager';
 
-Join our community of developers creating universal apps.
+// Сохранить
+await saveAppState('myCustomState', { data: '...' });
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+// Загрузить
+const state = await getAppState('myCustomState');
+```
+
+## Синхронизация между устройствами
+
+Текущая реализация сохраняет состояние локально. Для синхронизации между устройствами рекомендуется добавить:
+
+- API сервер для облачной синхронизации
+- Firebase Realtime Database или Firestore
+- AWS Amplify
+- CustomEncrypted S3 bucket
+
+## Документация и ресурсы
+
+- [Expo SQLite документация](https://docs.expo.dev/versions/latest/sdk/sqlite/)
+- [React Native документация](https://reactnative.dev/)
+- [React Navigation документация](https://reactnavigation.org/)
+- [DATABASE.md](./DATABASE.md) - полная документация БД
+
+## Лицензия
+
+Смотрите [LICENSE](./LICENSE)
+

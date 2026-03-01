@@ -1,27 +1,102 @@
 // Hooks
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 // Core components
-import { View, Text, FlatList, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
-// Mocks
-import { mockNotes } from '../data/mock-notes';
+import {
+  Alert,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
+// Database
+import { deleteNote, getAllNotes } from '../db/notesRepository';
+import { saveAppState } from '../db/stateManager';
 // Components
 import { NoteCard } from '../components/note-card';
 // Types
 import { NotesStackScreenProps } from '@/src/types/navigation';
+import { Note } from '@/src/types/note';
 
 export const HomeScreen = ({ navigation }: NotesStackScreenProps<'Home'>) => {
-  const [notes] = useState(mockNotes);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const { width } = useWindowDimensions();
   const numColumns = width >= 520 ? 2 : 1;
 
-  const listKey = useMemo(() => `cols-${numColumns}`, [numColumns]);
+  // 👇 Загрузка заметок
+  const loadNotes = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const dbNotes = await getAllNotes();
+      setNotes(dbNotes);
+      await saveAppState('homeScreenNotes', { count: dbNotes.length, timestamp: Date.now() });
+    } catch (error) {
+      console.error('Ошибка загрузки заметок:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // 👇 Инициализация при монтировании
+  useEffect(() => {
+    void loadNotes();
+  }, [loadNotes]);
+
+  // 👇 Открытие заметки для редактирования
+  const handleOpenNote = useCallback(
+    (note: Note) => {
+      navigation.navigate('NoteDetails', {
+        noteId: note.id!,
+      });
+    },
+    [navigation],
+  );
+
+  // 👇 Удаление заметки с подтверждением
+  const handleDeleteNote = useCallback(
+    async (noteId: number) => {
+      Alert.alert('Удалить заметку?', 'Это действие нельзя отменить', [
+        { text: 'Отмена', style: 'cancel' },
+        {
+          text: 'Удалить',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteNote(noteId);
+              await loadNotes();
+            } catch (error) {
+              console.error('Ошибка удаления заметки:', error);
+              Alert.alert('Ошибка', 'Не удалось удалить заметку');
+            }
+          },
+        },
+      ]);
+    },
+    [loadNotes],
+  );
+
+  // 👇 Перезагрузка при фокусе экрана
+  useEffect(() => {
+    return navigation.addListener('focus', () => {
+      void loadNotes();
+    });
+  }, [navigation, loadNotes]);
+
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <Text>Загрузка...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <View style={styles.topRow}>
         <Text style={styles.h1}>Умный блокнот</Text>
-
         <Pressable
           onPress={() => navigation.navigate('NoteEditor', { mode: 'create' })}
           style={({ pressed }) => [styles.addBtn, pressed && { opacity: 0.7 }]}
@@ -31,18 +106,19 @@ export const HomeScreen = ({ navigation }: NotesStackScreenProps<'Home'>) => {
       </View>
 
       <FlatList
-        key={listKey}
         data={notes}
         numColumns={numColumns}
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={styles.listContent}
-        columnWrapperStyle={numColumns > 1 ? styles.colWrap : null}
+        columnWrapperStyle={numColumns > 1 ? styles.colWrap : undefined}
         renderItem={({ item }) => (
-          <View style={styles.itemWrap}>
-            <NoteCard
-              note={item}
-              onPress={() => navigation.navigate('NoteDetails', { noteId: item.id })}
-            />
+          <View style={[styles.itemWrap, { flex: 1 / numColumns }]}>
+            <Pressable
+              onPress={() => handleOpenNote(item)}
+              onLongPress={() => handleDeleteNote(item.id!)}
+            >
+              <NoteCard note={item} onPress={() => handleOpenNote(item)} />
+            </Pressable>
           </View>
         )}
         ListEmptyComponent={
