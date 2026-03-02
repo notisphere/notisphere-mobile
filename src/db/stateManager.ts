@@ -10,8 +10,7 @@ interface AppStateRow {
  */
 export const saveAppState = async (key: string, value: any): Promise<void> => {
   try {
-    const db = await getDatabase(); // 👈 Получаем экземпляр БД
-
+    const db = await getDatabase();
     await db.runAsync(`INSERT OR REPLACE INTO app_state (key, value, updatedAt) VALUES (?, ?, ?)`, [
       key,
       JSON.stringify(value),
@@ -29,9 +28,7 @@ export const saveAppState = async (key: string, value: any): Promise<void> => {
  */
 export const getAppState = async <T = any>(key: string): Promise<T | null> => {
   try {
-    const db = await getDatabase(); // 👈 Получаем экземпляр БД
-
-    // 👇 getFirstAsync возвращает Promise — нужен await!
+    const db = await getDatabase();
     const row = await db.getFirstAsync<AppStateRow>(`SELECT value FROM app_state WHERE key = ?`, [
       key,
     ]);

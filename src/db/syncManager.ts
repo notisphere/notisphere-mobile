@@ -1,6 +1,6 @@
 import { getAllNotes, saveNote } from './notesRepository';
 import { getAppState, saveAppState } from './stateManager';
-import { ExportedData, SyncResult } from './types';
+import { AppSettings, ExportedData, SyncResult } from './types';
 import { Note } from '@/src/types/note';
 import { StateKeys } from '@/src/db/stateKeys';
 
@@ -11,19 +11,17 @@ export const exportAppData = async () => {
   try {
     const notes = await getAllNotes();
 
-    const [homeScreenNotes, lastEditedNote, lastSync, lastBackup] = await Promise.all([
-      getAppState(StateKeys.HOME_NOTES),
-      getAppState(StateKeys.LAST_EDITED),
-      getAppState(StateKeys.LAST_SYNC),
-      getAppState(StateKeys.LAST_BACKUP),
+    const [appSettings, lastSync] = await Promise.all([
+      getAppState<AppSettings>(StateKeys.APP_SETTINGS),
+      getAppState<string>(StateKeys.LAST_SYNC),
     ]);
 
     return {
       version: '1.0',
       exportedAt: new Date().toISOString(),
       notes,
-      screenStates: { homeScreenNotes, lastEditedNote },
-      meta: { lastSync, lastBackup },
+      appSettings,
+      lastSync,
     };
   } catch (error) {
     console.error('Ошибка экспорта данных:', error);
@@ -58,15 +56,14 @@ export const importAppData = async (data: ExportedData) => {
       console.log(`✓ Импортировано ${data.notes.length} заметок`);
     }
 
-    // Импортируем состояние приложения
-    if (data.appState) {
-      await saveAppState('appState', data.appState);
-      console.log('✓ Состояние приложения импортировано');
+    // Импортируем глобальные настройки
+    if (data.appSettings) {
+      await saveAppState(StateKeys.APP_SETTINGS, data.appSettings);
+      console.log('✓ Настройки приложения импортированы');
     }
-
-    // Обновляем время последней синхронизации
-    await saveAppState('lastSync', new Date().toISOString());
-    await saveAppState('lastImport', new Date().toISOString());
+    if (data.lastSync) {
+      await saveAppState(StateKeys.LAST_SYNC, data.lastSync);
+    }
 
     return { success: true };
   } catch (error) {

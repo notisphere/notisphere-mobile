@@ -1,20 +1,22 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { initDatabase } from './database';
 import { getAppState, saveAppState } from './stateManager';
 import { getAllNotes } from './notesRepository';
 import { seedDatabase } from './seedDatabase';
+import { AppSettings } from '@/src/db/types';
+import { StateKeys } from '@/src/db/stateKeys';
 
 export const useAppInitialization = () => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [appSettings, setAppSettings] = useState<AppSettings | null>(null);
 
   // Ref для отслеживания монтирования (защита от updates после unmount)
   const isMounted = useRef(true);
 
   useEffect(() => {
     return () => {
-      // Компонент размонтирован
       isMounted.current = false;
     };
   }, []);
@@ -37,13 +39,15 @@ export const useAppInitialization = () => {
       if (!isMounted.current) return;
 
       // 3. Восстанавливаем состояние
-      const lastState = await getAppState('appState');
-      if (!isMounted.current) return;
-
-      if (lastState) {
-        console.log('📦 Восстановленное состояние:', lastState);
+      const settings = await getAppState<AppSettings>(StateKeys.APP_SETTINGS);
+      if (settings) {
+        setAppSettings(settings);
+        console.log('🎨 Восстановлены настройки:', settings);
+        // 👇 Здесь можно применить тему/язык (раскомментируй при реализации)
+        // if (settings.theme) document.documentElement.setAttribute('data-theme', settings.theme);
+      } else {
+        console.log('🎨 [INIT] Настройки не найдены (первый запуск?)');
       }
-
       // 4. Загружаем заметки
       const notes = await getAllNotes();
       if (!isMounted.current) return;
@@ -105,5 +109,6 @@ export const useAppInitialization = () => {
     error,
     isLoading,
     retry,
+    appSettings,
   };
 };

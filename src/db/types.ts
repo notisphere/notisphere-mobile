@@ -1,11 +1,3 @@
-import * as SQLite from 'expo-sqlite';
-
-/**
- * ========================
- *  Domain Models (Приложение)
- * ========================
- */
-
 /**
  * Настройки приложения (хранятся под ключом 'appState')
  * @note Переименовано из AppState для избежания конфликтов
@@ -14,34 +6,24 @@ export interface AppSettings {
   theme: 'light' | 'dark';
   notifications: boolean;
   language: 'ru' | 'en';
-  lastSync?: string; // ISO date string
+  lastSync?: string;
   deviceId?: string;
 }
 
 /**
- * Состояние заметки при редактировании (UI state)
+ * Локальный кэш экрана (НЕ экспортируется, только для этого устройства)
  */
-export interface EditNoteState {
-  noteId?: number; // Может не быть для новой заметки
-  title: string;
-  text: string;
-  editedAt: number; // timestamp
-}
-
-/**
- * Состояние экрана со списком заметок (UI state)
- */
-export interface HomeScreenState {
-  scrollPosition: number;
-  selectedFilter: 'all' | 'recent' | 'favorites';
-  lastRefresh: number; // timestamp
-}
-
-/**
- * ========================
- *  Database Layer (БД)
- * ========================
- */
+export type ScreenCache = {
+  homeScreenNotes?: {
+    count: number;
+    timestamp: number;
+  };
+  lastEditedNote?: {
+    id: number;
+    timestamp: number;
+    mode: 'create' | 'edit' | 'view';
+  };
+};
 
 /**
  * "Сырая" строка из таблицы notes (для внутреннего использования в репозиториях)
@@ -55,27 +37,6 @@ export interface NoteRow {
 }
 
 /**
- * "Сырая" строка из таблицы app_state
- */
-export interface AppStateRow {
-  id: number;
-  key: string;
-  value: string; // JSON string
-  updatedAt: number | null;
-}
-
-/**
- * История операций с БД (для логирования/отладки)
- */
-export interface DBOperation {
-  type: 'create' | 'update' | 'delete';
-  table: 'notes' | 'attachments' | 'app_state';
-  entityId: number | string;
-  timestamp: number;
-  data?: unknown; // Лучше unknown, чем any
-}
-
-/**
  * Результат синхронизации
  */
 export interface SyncResult {
@@ -86,22 +47,6 @@ export interface SyncResult {
   notesDeleted: number;
   errors: string[];
 }
-
-/**
- * Конфиг для миграции БД (Sync API version)
- */
-export interface MigrationConfig {
-  version: number;
-  name: string;
-  // Используем SQLiteDatabase из expo-sqlite и void (синхронно)
-  migration: (db: SQLite.SQLiteDatabase) => void;
-}
-
-/**
- * ========================
- *  Import/Export
- * ========================
- */
 
 /**
  * Структура данных для экспорта/импорта
@@ -121,6 +66,6 @@ export interface ExportedData {
       location: boolean;
     };
   }[];
-  appState?: AppSettings;
+  appSettings?: AppSettings;
   lastSync?: string;
 }

@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 // Database
 import { deleteNote, getAllNotes } from '../db/notesRepository';
-import { saveAppState } from '../db/stateManager';
 // Components
 import { NoteCard } from '../components/note-card';
 // Types
@@ -32,7 +31,6 @@ export const HomeScreen = ({ navigation }: NotesStackScreenProps<'Home'>) => {
       setIsLoading(true);
       const dbNotes = await getAllNotes();
       setNotes(dbNotes);
-      await saveAppState('homeScreenNotes', { count: dbNotes.length, timestamp: Date.now() });
     } catch (error) {
       console.error('Ошибка загрузки заметок:', error);
     } finally {
@@ -40,10 +38,16 @@ export const HomeScreen = ({ navigation }: NotesStackScreenProps<'Home'>) => {
     }
   }, []);
 
-  // 👇 Инициализация при монтировании
   useEffect(() => {
     void loadNotes();
   }, [loadNotes]);
+
+  // Перезагрузка при фокусе экрана
+  useEffect(() => {
+    return navigation.addListener('focus', () => {
+      void loadNotes();
+    });
+  }, [navigation, loadNotes]);
 
   // 👇 Открытие заметки для редактирования
   const handleOpenNote = useCallback(
