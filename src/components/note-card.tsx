@@ -5,7 +5,7 @@ import { Badge } from '@/src/components/note-badge';
 // Types
 import { Note } from '@/src/types/note';
 
-/** Каоточка заметки */
+/** Карточка заметки */
 export const NoteCard = (props: {
   note: Note;
   onPress: (event: GestureResponderEvent) => void;

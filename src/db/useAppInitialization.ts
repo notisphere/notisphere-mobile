@@ -44,7 +44,6 @@ export const useAppInitialization = () => {
         console.log('📦 Восстановленное состояние:', lastState);
       }
 
-
       // 4. Загружаем заметки
       const notes = await getAllNotes();
       if (!isMounted.current) return;
