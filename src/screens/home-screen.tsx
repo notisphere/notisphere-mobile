@@ -1,5 +1,5 @@
 // Hooks
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 // Core components
 import {
   Alert,
@@ -17,15 +17,19 @@ import { NoteCard } from '../components/note-card';
 // Types
 import { NotesStackScreenProps } from '@/src/types/navigation';
 import { Note } from '@/src/types/note';
+import { useColors } from '@/src/theme/useColors';
 
 export const HomeScreen = ({ navigation }: NotesStackScreenProps<'Home'>) => {
   const [notes, setNotes] = useState<Note[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const { width } = useWindowDimensions();
   const numColumns = width >= 520 ? 2 : 1;
 
-  // 👇 Загрузка заметок
+  // Загрузка заметок
   const loadNotes = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -49,7 +53,7 @@ export const HomeScreen = ({ navigation }: NotesStackScreenProps<'Home'>) => {
     });
   }, [navigation, loadNotes]);
 
-  // 👇 Открытие заметки для редактирования
+  // Открытие заметки для редактирования
   const handleOpenNote = useCallback(
     (note: Note) => {
       navigation.navigate('NoteDetails', {
@@ -59,7 +63,7 @@ export const HomeScreen = ({ navigation }: NotesStackScreenProps<'Home'>) => {
     [navigation],
   );
 
-  // 👇 Удаление заметки с подтверждением
+  // Удаление заметки с подтверждением
   const handleDeleteNote = useCallback(
     async (noteId: number) => {
       Alert.alert('Удалить заметку?', 'Это действие нельзя отменить', [
@@ -82,7 +86,7 @@ export const HomeScreen = ({ navigation }: NotesStackScreenProps<'Home'>) => {
     [loadNotes],
   );
 
-  // 👇 Перезагрузка при фокусе экрана
+  // Перезагрузка при фокусе экрана
   useEffect(() => {
     return navigation.addListener('focus', () => {
       void loadNotes();
@@ -135,21 +139,28 @@ export const HomeScreen = ({ navigation }: NotesStackScreenProps<'Home'>) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 14, backgroundColor: '#f6f6f6' },
-  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  h1: { fontSize: 20, fontWeight: '800' },
-  addBtn: {
-    borderWidth: 1,
-    borderColor: '#222',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: 'white',
-  },
-  addBtnText: { fontWeight: '700' },
-  listContent: { paddingTop: 12, paddingBottom: 24 },
-  colWrap: { gap: 12 },
-  itemWrap: { flex: 1, paddingBottom: 12, paddingHorizontal: 0 },
-  empty: { padding: 24, alignItems: 'center' },
-});
+const makeStyles = (c: ReturnType<typeof useColors>) =>
+  StyleSheet.create({
+    container: { flex: 1, padding: 14, backgroundColor: c.bg },
+    topRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 12,
+    },
+    h1: { fontSize: 20, fontWeight: '800', color: c.text },
+    addBtn: {
+      borderWidth: 1,
+      borderColor: c.text,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 12,
+      backgroundColor: c.surface,
+    },
+    addBtnText: { fontWeight: '700', color: c.text },
+    listContent: { paddingTop: 12, paddingBottom: 24 },
+    colWrap: { gap: 12 },
+    itemWrap: { flex: 1, paddingBottom: 12, paddingHorizontal: 0 },
+    empty: { padding: 24, alignItems: 'center' },
+    muted: { color: c.textMuted },
+  });

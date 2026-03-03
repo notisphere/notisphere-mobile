@@ -1,4 +1,4 @@
-import { getDatabase } from './database'; // 👈 Импортируем функцию получения БД
+import { getDatabase } from './database';
 
 // Интерфейс для сырой строки из таблицы app_state
 interface AppStateRow {
@@ -17,7 +17,7 @@ export const saveAppState = async (key: string, value: any): Promise<void> => {
       Date.now(),
     ]);
   } catch (error) {
-    console.error(`❌ Ошибка сохранения состояния '${key}':`, error);
+    console.error(`Ошибка сохранения состояния '${key}':`, error);
     throw error;
   }
 };
@@ -38,11 +38,11 @@ export const getAppState = async <T = any>(key: string): Promise<T | null> => {
     try {
       return JSON.parse(row.value) as T;
     } catch (parseError) {
-      console.warn(`⚠️ Ошибка парсинга JSON для ключа '${key}':`, parseError);
+      console.warn(`Ошибка парсинга JSON для ключа '${key}':`, parseError);
       return null;
     }
   } catch (error) {
-    console.error(`❌ Ошибка получения состояния '${key}':`, error);
+    console.error(`Ошибка получения состояния '${key}':`, error);
     throw error;
   }
 };
@@ -55,7 +55,7 @@ export const deleteAppState = async (key: string): Promise<void> => {
     const db = await getDatabase();
     await db.runAsync(`DELETE FROM app_state WHERE key = ?`, [key]);
   } catch (error) {
-    console.error(`❌ Ошибка удаления состояния '${key}':`, error);
+    console.error(`Ошибка удаления состояния '${key}':`, error);
     throw error;
   }
 };
@@ -68,7 +68,7 @@ export const clearAllAppState = async (): Promise<void> => {
     const db = await getDatabase();
     await db.runAsync(`DELETE FROM app_state`);
   } catch (error) {
-    console.error('❌ Ошибка очистки всех состояний:', error);
+    console.error('Ошибка очистки всех состояний:', error);
     throw error;
   }
 };

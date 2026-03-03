@@ -13,8 +13,7 @@ export const saveNote = async (note: Note): Promise<number> => {
   const idToSave = note.id && note.id > 0 ? note.id : null;
 
   const result = await db.runAsync(
-    `INSERT OR REPLACE INTO notes (id, title, text, createdAt, updatedAt)
-     VALUES (?, ?, ?, ?, ?)`,
+    `INSERT OR REPLACE INTO notes (id, title, text, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?)`,
     [idToSave, note.title, note.text ?? null, note.createdAt.getTime(), timestamp],
   );
 
@@ -78,7 +77,7 @@ export const deleteAllNotes = async (): Promise<void> => {
       db.runSync(`DELETE FROM notes`);
     });
   } catch (error) {
-    console.error('❌ Ошибка очистки базы:', error);
+    console.error('Ошибка очистки базы:', error);
     throw error;
   }
 };

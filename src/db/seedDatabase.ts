@@ -1,11 +1,11 @@
-import { getDatabase } from './database'; // 👈 Импортируем функцию получения БД
+import { getDatabase } from './database';
 import { mockNotes } from '@/src/data/mock-notes';
 
 /**
  * Заполняет БД примерами из mock-notes при первом запуске
  */
 export const seedDatabase = async (): Promise<void> => {
-  const db = await getDatabase(); // 👈 Получаем экземпляр БД
+  const db = await getDatabase();
 
   try {
     // Проверяем, есть ли уже данные
@@ -17,8 +17,6 @@ export const seedDatabase = async (): Promise<void> => {
     const count = result?.count ?? 0;
 
     if (count === 0 && mockNotes.length > 0) {
-      console.log('📌 Добавляю примеры заметок в БД...');
-
       // Используем транзакцию для атомарной вставки всех заметок
       await db.withTransactionAsync(async () => {
         for (const note of mockNotes) {
@@ -28,11 +26,9 @@ export const seedDatabase = async (): Promise<void> => {
           );
         }
       });
-
-      console.log(`✓ Добавлено ${mockNotes.length} примеров заметок`);
     }
   } catch (error) {
-    console.error('❌ Ошибка при заполнении БД:', error);
+    console.error('Ошибка при заполнении БД:', error);
     throw error;
   }
 };

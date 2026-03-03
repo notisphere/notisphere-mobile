@@ -1,24 +1,79 @@
 // Core components
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
+// Views
+import { SafeAreaView } from 'react-native-safe-area-context';
+// Hooks
+import { useAppSettings } from '@/src/theme/AppSettingsContext';
+import { useColors } from '@/src/theme/useColors';
+import { useMemo } from 'react';
 
+/** Экран настроек */
 export const SettingsScreen = () => {
+  const { appSettings, setTheme } = useAppSettings();
+
+  const c = useColors();
+  const styles = useMemo(() => makeStyles(c), [c]);
+
+  // Выбор текущей темы приложения
+  const isLight = appSettings.theme === 'light';
+  const isDark = appSettings.theme === 'dark';
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Настройки (заглушка)</Text>
-      <Text>Синхронизация / напоминания / восстановление состояния — позже.</Text>
-    </View>
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <View style={styles.container}>
+        <Text style={styles.title}>Настройки</Text>
+
+        <View style={styles.card}>
+          <Text style={styles.rowTitle}>Тема</Text>
+
+          <View style={styles.row}>
+            <Pressable
+              onPress={() => void setTheme('light')}
+              style={[styles.btn, isLight && styles.btnActive]}
+            >
+              <Text style={[styles.btnText, isLight && styles.btnTextActive]}>Светлая</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => void setTheme('dark')}
+              style={[styles.btn, isDark && styles.btnActive]}
+            >
+              <Text style={[styles.btnText, isDark && styles.btnTextActive]}>Тёмная</Text>
+            </Pressable>
+          </View>
+
+          <Text style={styles.hint}>Тема сохраняется и восстановится при следующем запуске.</Text>
+        </View>
+      </View>
+    </SafeAreaView>
   );
 };
 
-/** Стили */
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#fff',
-    padding: 14,
-  },
-  title: { fontSize: 20, fontWeight: '800' },
-});
+const makeStyles = (c: ReturnType<typeof useColors>) =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: c.surface },
+    container: { flex: 1, padding: 14, backgroundColor: c.surface },
+    title: { fontSize: 20, fontWeight: '800', marginBottom: 12, color: c.text },
+    card: {
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 14,
+      padding: 12,
+      backgroundColor: c.surface,
+    },
+    rowTitle: { fontSize: 16, fontWeight: '700', marginBottom: 10, color: c.text },
+    row: { flexDirection: 'row', gap: 10 },
+    btn: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 12,
+      paddingVertical: 10,
+      alignItems: 'center',
+      backgroundColor: c.bg,
+    },
+    btnActive: { borderColor: c.text },
+    btnText: { fontWeight: '700', color: c.textMuted },
+    btnTextActive: { fontWeight: '900', color: c.text },
+    hint: { marginTop: 10, color: c.textMuted },
+  });

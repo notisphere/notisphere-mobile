@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { initDatabase } from './database';
 import { getAppState, saveAppState } from './stateManager';
-import { getAllNotes } from './notesRepository';
 import { seedDatabase } from './seedDatabase';
 import { AppSettings } from '@/src/db/types';
 import { StateKeys } from '@/src/db/stateKeys';
@@ -21,14 +20,12 @@ export const useAppInitialization = () => {
     };
   }, []);
 
-  // 👇 Оборачиваем в useCallback, чтобы функция была стабильной
   const initializeApp = useCallback(async () => {
     // Если уже инициализировано — выходим (защита от двойного запуска)
     if (isInitialized) return;
 
     try {
       if (isMounted.current) setIsLoading(true);
-      console.log('🔄 Инициализация приложения...');
 
       // 1. Инициализируем БД
       await initDatabase();
@@ -42,17 +39,23 @@ export const useAppInitialization = () => {
       const settings = await getAppState<AppSettings>(StateKeys.APP_SETTINGS);
       if (settings) {
         setAppSettings(settings);
-        console.log('🎨 Восстановлены настройки:', settings);
-        // 👇 Здесь можно применить тему/язык (раскомментируй при реализации)
+        // Здесь можно применить тему/язык (раскомментируй при реализации)
         // if (settings.theme) document.documentElement.setAttribute('data-theme', settings.theme);
       } else {
-        console.log('🎨 [INIT] Настройки не найдены (первый запуск?)');
-      }
-      // 4. Загружаем заметки
-      const notes = await getAllNotes();
-      if (!isMounted.current) return;
+        // Установка настроек приложения по умолчанию
+        const defaultSettings: AppSettings = {
+          theme: 'light',
+          notifications: true,
+          language: 'ru',
+          lastSync: undefined,
+          deviceId: undefined,
+        };
 
-      console.log(`📝 Загружено заметок: ${notes.length}`);
+        setAppSettings(defaultSettings);
+        await saveAppState(StateKeys.APP_SETTINGS, defaultSettings);
+      }
+
+      if (!isMounted.current) return;
 
       // 5. Сохраняем время последней синхронизации
       await saveAppState('lastSync', new Date().toISOString());
@@ -61,21 +64,20 @@ export const useAppInitialization = () => {
       // Успех
       if (isMounted.current) {
         setIsInitialized(true);
-        console.log('✅ Приложение инициализировано успешно');
       }
     } catch (err) {
       if (!isMounted.current) return;
 
       const errorMsg = err instanceof Error ? err.message : String(err);
       setError(errorMsg);
-      console.error('❌ Ошибка инициализации:', errorMsg);
+      console.error('Ошибка инициализации:', errorMsg);
     } finally {
       // Гарантированно выключаем лоадер, только если компонент примонтирован
       if (isMounted.current) {
         setIsLoading(false);
       }
     }
-  }, [isInitialized]); // 👈 Зависимости: только isInitialized
+  }, [isInitialized]);
 
   // Запуск при монтировании
   useEffect(() => {
@@ -86,7 +88,7 @@ export const useAppInitialization = () => {
       await initializeApp();
     };
     void onLoad();
-  }, [initializeApp, isInitialized]); // 👈 Зависимости
+  }, [initializeApp, isInitialized]);
 
   // Функция для повторной инициализации
   const retry = useCallback(() => {

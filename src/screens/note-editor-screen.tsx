@@ -1,5 +1,5 @@
 // Hooks
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 // Core components
 import {
   Alert,
@@ -18,9 +18,14 @@ import { Note } from '@/src/types/note';
 import { getNoteById, saveNote } from '@/src/db/notesRepository';
 import { getAppState, saveAppState } from '@/src/db/stateManager';
 import { StateKeys } from '@/src/db/stateKeys';
+import { useColors } from '@/src/theme/useColors';
 
 function ActionBtn(props: { label: string; onPress: (event: GestureResponderEvent) => void }) {
   const { label, onPress } = props;
+
+  const c = useColors();
+  const styles = useMemo(() => makeStyles(c), [c]);
+
   return (
     <Pressable
       onPress={onPress}
@@ -34,6 +39,9 @@ function ActionBtn(props: { label: string; onPress: (event: GestureResponderEven
 export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => {
   const { route, navigation } = props;
 
+  const c = useColors();
+  const styles = useMemo(() => makeStyles(c), [c]);
+
   const params = route.params;
   const mode = params.mode;
   const noteId = mode === 'edit' ? params.noteId : undefined;
@@ -43,17 +51,15 @@ export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => 
   const [isLoading, setIsLoading] = useState(mode === 'edit');
   const [isRestoring, setIsRestoring] = useState(false);
 
-  // 👇 Храним оригинальные данные заметки для режима редактирования
+  // Храним оригинальные данные заметки для режима редактирования
   const [originalNote, setOriginalNote] = useState<Note | null>(null);
 
-  // 👇 Оборачиваем загрузку в useCallback для стабильной ссылки
   const loadNote = useCallback(async (id: number) => {
     try {
       const note = await getNoteById(id);
       if (note) {
         setOriginalNote(note); // Сохраняем оригинал
         setTitle(note.title);
-        // 👇 TextInput не принимает null, используем ?? ''
         setText(note.text ?? '');
       }
     } catch (error) {
@@ -64,7 +70,6 @@ export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => 
     }
   }, []);
 
-  // 👇 Инициализация с void для ESLint
   useEffect(() => {
     if ((mode === 'edit' || mode === 'view') && noteId) {
       void loadNote(noteId);
@@ -73,7 +78,6 @@ export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => 
     }
   }, [mode, noteId, loadNote]);
 
-  // 👇 Восстановление черновика (только для режима create)
   useEffect(() => {
     if (mode !== 'create') return;
 
@@ -91,11 +95,9 @@ export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => 
           const hasContent = draft.title?.trim() || draft.text?.trim();
 
           if (hasValidId && draft.id! >= 0) {
-            // 👇 Существующая заметка
             navigation.setParams({ mode: 'edit', noteId: draft.id });
-            await loadNote(draft.id); // 👈 Явно загружаем
+            await loadNote(draft.id);
           } else if (hasContent) {
-            // 👇 Новая заметка — заполняем поля
             setTitle(draft.title ?? '');
             setText(draft.text ?? '');
           }
@@ -106,7 +108,7 @@ export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => 
     };
 
     void restoreDraft();
-  }, [mode, navigation, loadNote]); // 👈 Добавь loadNote в зависимости
+  }, [mode, navigation, loadNote]);
 
   const hasSavedDraft = useRef(false);
 
@@ -122,7 +124,6 @@ export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => 
         text,
         timestamp: Date.now(),
       });
-      console.log('💾 Черновик сохранён (первый ввод)');
     }
   }, [mode, title, text, isRestoring]);
 
@@ -136,7 +137,6 @@ export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => 
           text,
           timestamp: Date.now(),
         });
-        console.log('💾 Черновик обновлён при размонтировании');
       }
     };
   }, [mode, title, text]);
@@ -150,7 +150,6 @@ export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => 
     try {
       const noteIdToSave = mode === 'edit' && originalNote?.id ? originalNote.id : 0;
 
-      // 👇 Формируем объект заметки с учётом режима
       const note: Note = {
         // Для новой заметки: undefined (чтобы сработал AUTOINCREMENT)
         // Для редактирования: сохраняем оригинальный ID
@@ -159,10 +158,8 @@ export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => 
         title,
         text,
 
-        // 👇 КРИТИЧНО: При редактировании сохраняем оригинальную дату создания!
         createdAt: mode === 'edit' && originalNote?.createdAt ? originalNote.createdAt : new Date(),
 
-        // 👇 Сохраняем существующие вложения или ставим дефолтные
         attachment: originalNote?.attachment ?? { photo: false, audio: false, location: false },
       };
 
@@ -183,7 +180,6 @@ export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => 
     }
   };
 
-  // 👇 Удаление заметки
   const handleDeletePress = () => {
     if (!originalNote?.id) return;
 
@@ -257,13 +253,13 @@ export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => 
               onPress={handleEditPress}
               style={({ pressed }) => [styles.editBtn, pressed && { opacity: 0.7 }]}
             >
-              <Text style={styles.editBtnText}>✏️ Редактировать</Text>
+              <Text style={styles.editBtnText}>Редактировать</Text>
             </Pressable>
             <Pressable
               onPress={handleDeletePress}
               style={({ pressed }) => [styles.deleteBtn, pressed && { opacity: 0.7 }]}
             >
-              <Text style={styles.deleteBtnText}>🗑️ Удалить</Text>
+              <Text style={styles.deleteBtnText}>Удалить</Text>
             </Pressable>
           </View>
         ) : (
@@ -272,7 +268,7 @@ export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => 
             onPress={handleSave}
             style={({ pressed }) => [styles.saveBtn, pressed && { opacity: 0.7 }]}
           >
-            <Text style={styles.saveBtnText}>💾 Сохранить</Text>
+            <Text style={styles.saveBtnText}>Сохранить</Text>
           </Pressable>
         )}
       </View>
@@ -280,56 +276,66 @@ export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => 
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 14, backgroundColor: '#fff' },
-  h1: { fontSize: 20, fontWeight: '800', marginBottom: 14 },
-  label: { marginTop: 12, marginBottom: 6, fontWeight: '700' },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    backgroundColor: '#fafafa',
-  },
-  textarea: { minHeight: 140, textAlignVertical: 'top' },
-  actionsRow: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
-  actionBtn: {
-    borderWidth: 1,
-    borderColor: '#bbb',
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    backgroundColor: 'white',
-  },
-  actionBtnText: { fontWeight: '700' },
-  footer: { marginTop: 20 },
-  actionRow: { flexDirection: 'row', gap: 12, justifyContent: 'flex-end' },
-  editBtn: {
-    borderWidth: 1,
-    borderColor: '#007AFF',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: '#E6F2FF',
-  },
-  editBtnText: { color: '#007AFF', fontWeight: '700' },
-  deleteBtn: {
-    borderWidth: 1,
-    borderColor: '#FF3B30',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: '#FFE5E5',
-  },
-  deleteBtnText: { color: '#FF3B30', fontWeight: '700' },
-  saveBtn: {
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#222',
-    padding: 12,
-    alignItems: 'center',
-    backgroundColor: '#E8F5E9',
-  },
-  saveBtnText: { fontWeight: '800', color: '#2E7D32' },
-});
+const makeStyles = (c: ReturnType<typeof useColors>) =>
+  StyleSheet.create({
+    container: { flex: 1, padding: 14, backgroundColor: c.surface },
+    muted: { color: c.textMuted },
+
+    h1: { fontSize: 20, fontWeight: '800', marginBottom: 14, color: c.text },
+    label: { marginTop: 12, marginBottom: 6, fontWeight: '700', color: c.text },
+
+    input: {
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 12,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      backgroundColor: c.bg,
+      color: c.text,
+    },
+    textarea: { minHeight: 140, textAlignVertical: 'top' },
+
+    actionsRow: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
+    actionBtn: {
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 999,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      backgroundColor: c.surface,
+    },
+    actionBtnText: { fontWeight: '700', color: c.text },
+
+    footer: { marginTop: 20 },
+    actionRow: { flexDirection: 'row', gap: 12, justifyContent: 'flex-end' },
+
+    editBtn: {
+      borderWidth: 1,
+      borderColor: c.primary,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      backgroundColor: c.primaryBg,
+    },
+    editBtnText: { color: c.primary, fontWeight: '700' },
+
+    deleteBtn: {
+      borderWidth: 1,
+      borderColor: c.danger,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      backgroundColor: c.dangerBg,
+    },
+    deleteBtnText: { color: c.danger, fontWeight: '700' },
+
+    saveBtn: {
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: c.success,
+      padding: 12,
+      alignItems: 'center',
+      backgroundColor: c.successBg,
+    },
+    saveBtnText: { fontWeight: '800', color: c.success },
+  });

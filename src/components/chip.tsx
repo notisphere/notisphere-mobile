@@ -1,8 +1,13 @@
 // Core components
 import { View, Text, StyleSheet } from 'react-native';
+import { useColors } from '@/src/theme/useColors';
+import { useMemo } from 'react';
 
 export const Chip = (props: { label: string }) => {
   const { label } = props;
+
+  const c = useColors();
+  const styles = useMemo(() => makeStyles(c), [c]);
 
   return (
     <View style={styles.chip}>
@@ -12,13 +17,15 @@ export const Chip = (props: { label: string }) => {
 };
 
 /** Стили */
-const styles = StyleSheet.create({
-  chip: {
-    borderWidth: 1,
-    borderColor: '#bbb',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  chipText: { fontSize: 13 },
-});
+const makeStyles = (c: ReturnType<typeof useColors>) =>
+  StyleSheet.create({
+    chip: {
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 999,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      backgroundColor: c.bg,
+    },
+    chipText: { fontSize: 13, color: c.text },
+  });
