@@ -1,10 +1,18 @@
+// Hooks
 import { useCallback, useEffect, useRef, useState } from 'react';
+
+// Database
 import { initDatabase } from './database';
-import { getAppState, saveAppState } from './stateManager';
 import { seedDatabase } from './seedDatabase';
-import { AppSettings } from '@/src/db/types';
+
+// State
+import { getAppState, saveAppState } from './stateManager';
 import { StateKeys } from '@/src/db/stateKeys';
 
+// Types
+import { AppSettings } from '@/src/db/types';
+
+/** Хук для инициализации приложения */
 export const useAppInitialization = () => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);

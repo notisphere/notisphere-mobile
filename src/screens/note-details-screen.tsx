@@ -1,17 +1,26 @@
 // Core components
 import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
+
 // Hooks
 import { useEffect, useState, useCallback, useMemo } from 'react';
+
 // Components
 import { Chip } from '@/src/components/chip';
+
 // Types
 import { NotesStackScreenProps } from '@/src/types/navigation';
 import { Note } from '@/src/types/note';
+
 // Database
 import { getNoteById, deleteNote } from '@/src/db/notesRepository';
+
+// Helpers
 import { confirmAction } from '@/src/utils/confirm';
+
+// Theme
 import { useColors } from '@/src/theme/useColors';
 
+/** Экран с деталями заметки (просмотр заметки) */
 export const NoteDetailsScreen = (props: NotesStackScreenProps<'NoteDetails'>) => {
   const { route, navigation } = props;
   const { noteId } = route.params;

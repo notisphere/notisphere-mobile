@@ -1,8 +1,13 @@
+// Repositories
 import { getAllNotes, saveNote } from './notesRepository';
+
+// State
 import { getAppState, saveAppState } from './stateManager';
+import { StateKeys } from '@/src/db/stateKeys';
+
+// Types
 import { AppSettings, ExportedData, SyncResult } from './types';
 import { Note } from '@/src/types/note';
-import { StateKeys } from '@/src/db/stateKeys';
 
 /**
  * Экспортирует все данные приложения для синхронизации
@@ -45,7 +50,6 @@ export const importAppData = async (data: ExportedData) => {
             typeof rawNote.createdAt === 'string'
               ? new Date(rawNote.createdAt) // ISO string -> Date
               : new Date(rawNote.createdAt), // timestamp -> Date
-          // updatedAt обычно не нужен в Note, т.к. это вычисляемое поле или хранится отдельно
           attachment: rawNote.attachment ?? { photo: false, audio: false, location: false },
         };
 

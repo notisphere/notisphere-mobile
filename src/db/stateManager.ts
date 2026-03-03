@@ -1,6 +1,7 @@
+// Database
 import { getDatabase } from './database';
 
-// Интерфейс для сырой строки из таблицы app_state
+/** Интерфейс для сырой строки из таблицы app_state */
 interface AppStateRow {
   value: string; // В БД храним как JSON-строку
 }

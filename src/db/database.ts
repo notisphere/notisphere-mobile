@@ -1,7 +1,10 @@
+// Core
 import * as SQLite from 'expo-sqlite';
 
+/** Подключение к базе данных */
 let db: SQLite.SQLiteDatabase | null = null;
 
+/** Получение подключения к базе данных */
 export const getDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
   if (!db) {
     db = await SQLite.openDatabaseAsync('notisphere.db');
@@ -9,6 +12,7 @@ export const getDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
   return db;
 };
 
+/** Инициализация базы даннхы (создание таблиц при первом запуске) */
 export const initDatabase = async () => {
   const database = await getDatabase();
 

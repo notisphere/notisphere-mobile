@@ -1,8 +1,13 @@
 // Core components
 import { View, Text, StyleSheet } from 'react-native';
+
+// Theme
 import { useColors } from '@/src/theme/useColors';
+
+// Hooks
 import { useMemo } from 'react';
 
+/** Экран с погодой */
 export const WeatherScreen = () => {
   const c = useColors();
   const styles = useMemo(() => makeStyles(c), [c]);

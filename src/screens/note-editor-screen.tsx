@@ -1,5 +1,6 @@
 // Hooks
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
 // Core components
 import {
   Alert,
@@ -11,15 +12,22 @@ import {
   TextInput,
   View,
 } from 'react-native';
+
 // Types
 import { NotesStackScreenProps } from '@/src/types/navigation';
 import { Note } from '@/src/types/note';
-// Database
+
+// Repositories
 import { getNoteById, saveNote } from '@/src/db/notesRepository';
+
+// State
 import { getAppState, saveAppState } from '@/src/db/stateManager';
 import { StateKeys } from '@/src/db/stateKeys';
+
+// Theme
 import { useColors } from '@/src/theme/useColors';
 
+/** Кнопка для взаимодействия с заметкой */
 function ActionBtn(props: { label: string; onPress: (event: GestureResponderEvent) => void }) {
   const { label, onPress } = props;
 
@@ -36,6 +44,7 @@ function ActionBtn(props: { label: string; onPress: (event: GestureResponderEven
   );
 }
 
+/** Экран редактирования заметки */
 export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => {
   const { route, navigation } = props;
 

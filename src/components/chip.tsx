@@ -1,7 +1,11 @@
 // Core components
 import { View, Text, StyleSheet } from 'react-native';
-import { useColors } from '@/src/theme/useColors';
+
+// Hooks
 import { useMemo } from 'react';
+
+// Theme
+import { useColors } from '@/src/theme/useColors';
 
 export const Chip = (props: { label: string }) => {
   const { label } = props;

@@ -1,6 +1,11 @@
+// Database
 import { getDatabase } from './database';
+
+// Types
 import { Note } from '@/src/types/note';
 import { NoteRow } from '@/src/db/types';
+
+// Реаозиторий для работы с заметками
 
 /**
  * Сохраняет заметку в БД
