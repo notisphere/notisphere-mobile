@@ -18,6 +18,7 @@ import { NotesStackParamList, RootTabParamList } from '@/src/types/navigation';
 const Tab = createBottomTabNavigator<RootTabParamList>();
 const Stack = createNativeStackNavigator<NotesStackParamList>();
 
+// Навигация в рамках главного экрана
 const HomeStack = () => {
   return (
     <Stack.Navigator>
@@ -36,6 +37,7 @@ const HomeStack = () => {
   );
 };
 
+/** Нижний бар для навигации в приложении */
 export const RootNavigator = () => {
   return (
     <Tab.Navigator screenOptions={{ headerShown: false }}>

@@ -1,5 +1,7 @@
+// Types
 import { Colors, ThemeMode } from '@/src/types/colors';
 
+/** Цвета, используемые в приложении для каждой темы */
 export const colorsByTheme: Record<ThemeMode, Colors> = {
   light: {
     bg: '#F6F6F6',

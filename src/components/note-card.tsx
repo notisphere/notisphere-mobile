@@ -1,11 +1,17 @@
 // Core components
 import { View, Text, Pressable, StyleSheet, GestureResponderEvent } from 'react-native';
+
 // Components
 import { Badge } from '@/src/components/note-badge';
+
 // Types
 import { Note } from '@/src/types/note';
-import { useColors } from '@/src/theme/useColors';
+
+// Hooks
 import { useMemo } from 'react';
+
+// Theme
+import { useColors } from '@/src/theme/useColors';
 
 /** Карточка заметки */
 export const NoteCard = (props: {

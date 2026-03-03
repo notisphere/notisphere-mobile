@@ -1,5 +1,6 @@
 // Hooks
 import { useCallback, useEffect, useMemo, useState } from 'react';
+
 // Core components
 import {
   Alert,
@@ -10,15 +11,21 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
+
 // Database
 import { deleteNote, getAllNotes } from '../db/notesRepository';
+
 // Components
 import { NoteCard } from '../components/note-card';
+
 // Types
 import { NotesStackScreenProps } from '@/src/types/navigation';
 import { Note } from '@/src/types/note';
+
+// Theme
 import { useColors } from '@/src/theme/useColors';
 
+/** Главный экран */
 export const HomeScreen = ({ navigation }: NotesStackScreenProps<'Home'>) => {
   const [notes, setNotes] = useState<Note[]>([]);
   const [isLoading, setIsLoading] = useState(true);

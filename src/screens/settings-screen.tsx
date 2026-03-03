@@ -1,13 +1,19 @@
 // Core components
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+
 // Views
 import { SafeAreaView } from 'react-native-safe-area-context';
+
 // Hooks
-import { useAppSettings } from '@/src/theme/AppSettingsContext';
-import { useColors } from '@/src/theme/useColors';
 import { useMemo } from 'react';
 
-/** Экран настроек */
+// Settings
+import { useAppSettings } from '@/src/theme/AppSettingsContext';
+
+// Theme
+import { useColors } from '@/src/theme/useColors';
+
+/** Экран настроек приложения */
 export const SettingsScreen = () => {
   const { appSettings, setTheme } = useAppSettings();
 

@@ -1,4 +1,7 @@
+// Database
 import { getDatabase } from './database';
+
+// Mocks
 import { mockNotes } from '@/src/data/mock-notes';
 
 /**
