@@ -7,7 +7,10 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 export type NotesStackParamList = {
   Home: undefined;
   NoteDetails: { noteId: number };
-  NoteEditor: { mode: 'create' } | { mode: 'edit'; noteId: number };
+  NoteEditor:
+    | { mode: 'create' }
+    | { mode: 'edit'; noteId: number }
+    | { mode: 'view'; noteId: number };
 };
 
 /** Tabs (корневые) */
