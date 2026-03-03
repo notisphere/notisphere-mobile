@@ -1,7 +1,7 @@
 // Core components
 import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
 // Hooks
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 // Components
 import { Chip } from '@/src/components/chip';
 // Types
@@ -10,15 +10,19 @@ import { Note } from '@/src/types/note';
 // Database
 import { getNoteById, deleteNote } from '@/src/db/notesRepository';
 import { confirmAction } from '@/src/utils/confirm';
+import { useColors } from '@/src/theme/useColors';
 
 export const NoteDetailsScreen = (props: NotesStackScreenProps<'NoteDetails'>) => {
   const { route, navigation } = props;
   const { noteId } = route.params;
 
+  const c = useColors();
+  const styles = useMemo(() => makeStyles(c), [c]);
+
   const [note, setNote] = useState<Note | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 👇 Оборачиваем загрузку в useCallback для стабильной ссылки
+  // Оборачиваем загрузку в useCallback для стабильной ссылки
   const loadNote = useCallback(async () => {
     try {
       const dbNote = await getNoteById(noteId);
@@ -29,9 +33,8 @@ export const NoteDetailsScreen = (props: NotesStackScreenProps<'NoteDetails'>) =
     } finally {
       setIsLoading(false);
     }
-  }, [noteId]); // 👈 noteId в зависимостях
+  }, [noteId]);
 
-  // 👇 Инициализация с void для ESLint
   useEffect(() => {
     const onLoad = async () => {
       await loadNote();
@@ -98,28 +101,38 @@ export const NoteDetailsScreen = (props: NotesStackScreenProps<'NoteDetails'>) =
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 14, backgroundColor: '#fff' },
-  title: { fontSize: 22, fontWeight: '800', marginBottom: 10 },
-  text: { fontSize: 16, lineHeight: 22, color: '#333' },
-  sectionTitle: { marginTop: 18, marginBottom: 10, fontSize: 16, fontWeight: '700' },
-  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  btn: {
-    marginTop: 22,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#222',
-    padding: 12,
-    alignItems: 'center',
-  },
-  btnText: { fontWeight: '800' },
-  deleteBtn: {
-    marginTop: 10,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#ff3b30',
-    padding: 12,
-    alignItems: 'center',
-  },
-  deleteBtnText: { fontWeight: '800', color: '#ff3b30' },
-});
+const makeStyles = (c: ReturnType<typeof useColors>) =>
+  StyleSheet.create({
+    container: { flex: 1, padding: 14, backgroundColor: c.surface },
+    title: { fontSize: 22, fontWeight: '800', marginBottom: 10, color: c.text },
+    text: { fontSize: 16, lineHeight: 22, color: c.textMuted },
+    muted: { color: c.textMuted },
+    sectionTitle: {
+      marginTop: 18,
+      marginBottom: 10,
+      fontSize: 16,
+      fontWeight: '700',
+      color: c.text,
+    },
+    row: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+    btn: {
+      marginTop: 22,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: c.text,
+      padding: 12,
+      alignItems: 'center',
+      backgroundColor: c.surface,
+    },
+    btnText: { fontWeight: '800', color: c.text },
+    deleteBtn: {
+      marginTop: 10,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: c.danger,
+      padding: 12,
+      alignItems: 'center',
+      backgroundColor: c.dangerBg,
+    },
+    deleteBtnText: { fontWeight: '800', color: c.danger },
+  });

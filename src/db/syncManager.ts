@@ -34,8 +34,6 @@ export const exportAppData = async () => {
  */
 export const importAppData = async (data: ExportedData) => {
   try {
-    console.log('📥 Импортирую данные приложения...');
-
     // Импортируем заметки
     if (data.notes && Array.isArray(data.notes)) {
       for (const rawNote of data.notes) {
@@ -53,13 +51,11 @@ export const importAppData = async (data: ExportedData) => {
 
         await saveNote(noteToSave);
       }
-      console.log(`✓ Импортировано ${data.notes.length} заметок`);
     }
 
     // Импортируем глобальные настройки
     if (data.appSettings) {
       await saveAppState(StateKeys.APP_SETTINGS, data.appSettings);
-      console.log('✓ Настройки приложения импортированы');
     }
     if (data.lastSync) {
       await saveAppState(StateKeys.LAST_SYNC, data.lastSync);
@@ -87,21 +83,19 @@ export const syncWithCloud = async (): Promise<SyncResult> => {
   };
 
   try {
-    console.log('🔄 Начинаю синхронизацию с облаком...');
-
     // TODO: Реализовать облачную синхронизацию
     // 1. Получить данные с сервера
     // 2. Сравнить с локальными данными
     // 3. Загрузить новые/измененные заметки
     // 4. Обновить локальную БД
 
-    console.warn('⚠️  Облачная синхронизация не реализована');
+    console.warn('Облачная синхронизация не реализована');
     result.errors = ['Необходимо реализовать синхронизацию с API сервером'];
     return result;
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     result.errors.push(errorMsg);
-    console.error('❌ Ошибка синхронизации:', error);
+    console.error('Ошибка синхронизации:', error);
     return result;
   }
 };
@@ -144,8 +138,6 @@ export const shouldSync = async (intervalMs: number = 3600000): Promise<boolean>
  */
 export const createBackup = async () => {
   try {
-    console.log('💾 Создаю резервную копию...');
-
     const backup = {
       timestamp: Date.now(),
       isoDate: new Date().toISOString(),
@@ -153,7 +145,6 @@ export const createBackup = async () => {
     };
 
     await saveAppState('lastBackup', backup);
-    console.log('✓ Резервная копия создана');
 
     return backup;
   } catch (error) {
@@ -167,16 +158,13 @@ export const createBackup = async () => {
  */
 export const restoreFromBackup = async () => {
   try {
-    console.log('♻️  Восстанавливаю из резервной копии...');
-
     const backup = await getAppState('lastBackup');
     if (!backup) {
-      console.warn('⚠️  Резервная копия не найдена');
+      console.warn('Резервная копия не найдена');
       return null;
     }
 
     await importAppData(backup.data);
-    console.log('✓ Восстановление завершено');
 
     return backup;
   } catch (error) {

@@ -4,6 +4,8 @@ import { View, Text, Pressable, StyleSheet, GestureResponderEvent } from 'react-
 import { Badge } from '@/src/components/note-badge';
 // Types
 import { Note } from '@/src/types/note';
+import { useColors } from '@/src/theme/useColors';
+import { useMemo } from 'react';
 
 /** Карточка заметки */
 export const NoteCard = (props: {
@@ -11,6 +13,9 @@ export const NoteCard = (props: {
   onPress: (event: GestureResponderEvent) => void;
 }) => {
   const { note, onPress } = props;
+
+  const c = useColors();
+  const styles = useMemo(() => makeStyles(c), [c]);
 
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
@@ -32,16 +37,17 @@ export const NoteCard = (props: {
 };
 
 /** Стили */
-const styles = StyleSheet.create({
-  card: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 14,
-    padding: 12,
-    backgroundColor: 'white',
-  },
-  pressed: { opacity: 0.7 },
-  title: { fontSize: 16, fontWeight: '700', marginBottom: 6 },
-  text: { fontSize: 14, color: '#333', marginBottom: 10 },
-  badgesRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-});
+const makeStyles = (c: ReturnType<typeof useColors>) =>
+  StyleSheet.create({
+    card: {
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 14,
+      padding: 12,
+      backgroundColor: c.surface,
+    },
+    pressed: { opacity: 0.7 },
+    title: { fontSize: 16, fontWeight: '700', marginBottom: 6, color: c.text },
+    text: { fontSize: 14, color: c.textMuted, marginBottom: 10 },
+    badgesRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+  });

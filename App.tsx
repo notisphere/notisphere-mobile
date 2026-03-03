@@ -1,13 +1,17 @@
 // Navigation
-import { NavigationContainer } from '@react-navigation/native';
+import {DarkTheme, DefaultTheme, NavigationContainer} from '@react-navigation/native';
 // Components
 import { RootNavigator } from '@/src/navigation/root-navigator';
 // Hooks
 import { useAppInitialization } from '@/src/db/useAppInitialization';
 import { View, ActivityIndicator } from 'react-native';
+import { AppSettingsProvider, useAppSettings } from "@/src/theme/AppSettingsContext";
 
 export default function App() {
-  const { isInitialized } = useAppInitialization();
+  const { isLoading, error, appSettings, isInitialized } = useAppInitialization();
+
+  if (isLoading || !appSettings) return null;
+  if (error) return null;
 
   if (!isInitialized) {
     return (
@@ -18,7 +22,18 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
+    <AppSettingsProvider initialSettings={appSettings}>
+      <ThemedNavigation />
+    </AppSettingsProvider>
+  );
+}
+
+const ThemedNavigation = () => {
+  const { appSettings } = useAppSettings();
+  const navTheme = appSettings.theme === 'dark' ? DarkTheme : DefaultTheme;
+
+  return (
+    <NavigationContainer theme={navTheme}>
       <RootNavigator />
     </NavigationContainer>
   );
