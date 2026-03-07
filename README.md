@@ -179,15 +179,6 @@ await saveAppState('myCustomState', { data: '...' });
 const state = await getAppState('myCustomState');
 ```
 
-## Синхронизация между устройствами
-
-Текущая реализация сохраняет состояние локально. Для синхронизации между устройствами рекомендуется добавить:
-
-- API сервер для облачной синхронизации
-- Firebase Realtime Database или Firestore
-- AWS Amplify
-- CustomEncrypted S3 bucket
-
 ## Документация и ресурсы
 
 - [Expo SQLite документация](https://docs.expo.dev/versions/latest/sdk/sqlite/)
