@@ -6,7 +6,7 @@ import { initDatabase } from './database';
 import { seedDatabase } from './seedDatabase';
 
 // State
-import { getAppState, saveAppState } from './stateManager';
+import { getAppState, saveAppState } from './managers/stateManager';
 import { StateKeys } from '@/src/db/stateKeys';
 
 // Types

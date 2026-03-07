@@ -11,21 +11,6 @@ export interface AppSettings {
 }
 
 /**
- * Локальный кэш экрана (НЕ экспортируется, только для этого устройства)
- */
-export type ScreenCache = {
-  homeScreenNotes?: {
-    count: number;
-    timestamp: number;
-  };
-  lastEditedNote?: {
-    id: number;
-    timestamp: number;
-    mode: 'create' | 'edit' | 'view';
-  };
-};
-
-/**
  * "Сырая" строка из таблицы notes (для внутреннего использования в репозиториях)
  */
 export interface NoteRow {

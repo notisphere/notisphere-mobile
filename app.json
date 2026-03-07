@@ -9,7 +9,13 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Приложение использует камеру для прикрепления фото к заметкам",
+        "NSMicrophoneUsageDescription": "Приложение использует микрофон для голосовых заметок",
+        "NSLocationWhenInUseUsageDescription": "Приложение добавляет геотеги к заметкам",
+        "NSPhotoLibraryAddUsageDescription": "Приложение сохраняет фото в галерею"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -19,7 +25,17 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "ACCESS_FINE_LOCATION",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ],
+      "package": "com.fuzikort.notispheremobile"
     },
     "web": {
       "output": "single"
@@ -36,11 +52,19 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-sqlite",
+      "expo-audio",
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "9c764e47-9534-4c92-9112-966ea25ec2d0"
+      }
     }
   }
 }

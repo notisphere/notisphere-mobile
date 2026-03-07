@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 
 // Database
-import { deleteNote, getAllNotes } from '../db/notesRepository';
+import { deleteNote, getAllNotes } from '../db/repositories/notesRepository';
 
 // Components
 import { NoteCard } from '../components/note-card';

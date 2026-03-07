@@ -37,6 +37,12 @@ export const initDatabase = async () => {
           photo INTEGER DEFAULT 0,
           audio INTEGER DEFAULT 0,
           location INTEGER DEFAULT 0,
+          photoUri TEXT,
+          audioUri TEXT,
+          audioDuration INTEGER,
+          latitude REAL,
+          longitude REAL,
+          address TEXT,
           FOREIGN KEY(noteId) REFERENCES notes(id) ON DELETE CASCADE
         );
       `);
@@ -56,5 +62,3 @@ export const initDatabase = async () => {
     throw error;
   }
 };
-
-export default getDatabase;

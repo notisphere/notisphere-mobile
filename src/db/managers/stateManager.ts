@@ -1,5 +1,5 @@
 // Database
-import { getDatabase } from './database';
+import { getDatabase } from '../database';
 
 /** Интерфейс для сырой строки из таблицы app_state */
 interface AppStateRow {

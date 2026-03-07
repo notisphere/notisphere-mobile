@@ -1,9 +1,10 @@
 // Database
-import { getDatabase } from './database';
+import { getDatabase } from '../database';
 
 // Types
 import { Note } from '@/src/types/note';
 import { NoteRow } from '@/src/db/types';
+import { getAttachmentByNoteId } from '@/src/db/repositories/attachmentsRepository';
 
 // Реаозиторий для работы с заметками
 
@@ -47,17 +48,22 @@ export const getAllNotes = async (): Promise<Note[]> => {
  */
 export const getNoteById = async (noteId: number): Promise<Note | null> => {
   const db = await getDatabase();
-
   const row = await db.getFirstAsync<NoteRow>(`SELECT * FROM notes WHERE id = ?`, [noteId]);
 
   if (!row) return null;
+
+  const attachment = (await getAttachmentByNoteId(noteId)) ?? {
+    photo: false,
+    audio: false,
+    location: false,
+  };
 
   return {
     id: row.id,
     title: row.title,
     text: row.text ?? '',
     createdAt: new Date(row.createdAt),
-    attachment: { photo: false, audio: false, location: false },
+    attachment: attachment,
   };
 };
 
