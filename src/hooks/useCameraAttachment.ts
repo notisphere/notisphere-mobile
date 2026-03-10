@@ -1,39 +1,28 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Linking, Platform } from 'react-native';
-import {
-  CameraView,
-  CameraType,
-  useCameraPermissions,
-  type CameraCapturedPicture,
-} from 'expo-camera';
-import * as MediaLibrary from 'expo-media-library';
+import { CameraType, CameraView, useCameraPermissions } from 'expo-camera';
 
-export const useCameraAttachment = () => {
+interface UseCameraAttachmentProps {
+  onPhotoCaptured?: () => void;
+}
+
+export const useCameraAttachment = ({ onPhotoCaptured }: UseCameraAttachmentProps = {}) => {
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
-  const [mediaPermission, requestMediaPermission] = MediaLibrary.usePermissions({
-    granularPermissions: ['photo'],
-  });
 
-  const [isCapturing, setIsCapturing] = useState(false);
   const [previewUri, setPreviewUri] = useState<string | null>(null);
   const [cameraType, setCameraType] = useState<CameraType>('back');
-
   const [isCameraReady, setIsCameraReady] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false); // ← новое: блокировка повторных нажатий
 
-  // 🔁 Внутренний ref камеры — больше не нужно передавать извне
-  const cameraRef = useRef<CameraView | null>(null);
+  const cameraRef = useRef<CameraView>(null);
 
   const hasCameraPermission = !!cameraPermission?.granted;
-  const hasMediaPermission = !!mediaPermission?.granted;
 
   useEffect(() => {
     return () => {
       setIsCameraReady(false);
-      if (previewUri?.startsWith('file://')) {
-        // Опциональная очистка через FileSystem
-      }
+      // Опционально: очистка временных файлов через FileSystem
     };
-  }, [previewUri]);
+  }, []);
 
   useEffect(() => {
     setIsCameraReady(false);
@@ -44,117 +33,79 @@ export const useCameraAttachment = () => {
       const result = await requestCameraPermission();
       if (!result?.granted) return false;
     }
-    if (!hasMediaPermission && requestMediaPermission) {
-      const result = await requestMediaPermission();
-      if (!result?.granted) return false;
-    }
     return true;
-  }, [hasCameraPermission, hasMediaPermission, requestCameraPermission, requestMediaPermission]);
+  }, [hasCameraPermission, requestCameraPermission]);
 
   const toggleCameraType = useCallback(() => {
     setCameraType((prev) => (prev === 'back' ? 'front' : 'back'));
+    setIsCameraReady(false);
   }, []);
 
   const handleCameraReady = useCallback(() => {
     setIsCameraReady(true);
   }, []);
 
-  const takePhoto = useCallback(
-    async (options?: {
-      saveToGallery?: boolean;
-      quality?: number;
-      onSuccess?: (uri: string) => void;
-    }) => {
-      const { saveToGallery = false, quality = 0.8, onSuccess } = options || {};
+  const handleCameraNotReady = useCallback(() => {
+    setIsCameraReady(false);
+  }, []);
 
-      if (!cameraRef.current) {
-        Alert.alert('Ошибка', 'Камера не инициализирована');
-        return null;
+  // 📸 СЪЁМКА ФОТО — главная функция
+  const takePicture = useCallback(async () => {
+    if (!cameraRef.current || !isCameraReady || isCapturing) {
+      console.warn('Camera not ready', !cameraRef.current, !isCameraReady, isCapturing);
+      return null;
+    }
+
+    setIsCapturing(true);
+    try {
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.85, // баланс качество/размер
+        base64: false, // не нужно, если не планируешь отправлять как строку
+        exif: false, // метаданные не нужны для превью
+        skipProcessing: true, // быстрее, но может быть меньше качество на некоторых устройствах
+      });
+
+      if (photo?.uri) {
+        setPreviewUri(photo.uri);
+        onPhotoCaptured?.();
+        return photo.uri;
       }
-
-      if (!hasCameraPermission || !hasMediaPermission) {
-        const ok = await requestAllPermissions();
-        if (!ok) {
-          Alert.alert('Доступ отклонён', 'Разрешите доступ к камере и галерее', [
-            { text: 'Отмена', style: 'cancel' },
-            { text: 'Настройки', onPress: () => Linking.openSettings() },
-          ]);
-          return null;
-        }
-      }
-
-      setIsCapturing(true);
-
-      try {
-        const photo: CameraCapturedPicture | undefined = await cameraRef.current.takePictureAsync({
-          quality,
-          base64: false,
-          exif: false,
-          skipProcessing: false,
-        });
-
-        if (!photo?.uri) throw new Error('Не удалось получить данные снимка');
-
-        let finalUri = photo.uri;
-
-        if (saveToGallery) {
-          try {
-            const uriToSave =
-              Platform.OS === 'android' && !photo.uri.startsWith('file://')
-                ? `file://${photo.uri}`
-                : photo.uri;
-
-            await MediaLibrary.saveToLibraryAsync(uriToSave);
-          } catch (mediaError: any) {
-            // 🔥 Игнорируем ошибку в Expo Go / debug-режиме
-            if (__DEV__ || mediaError.message?.includes('Expo Go')) {
-              console.warn('⚠️ Сохранение в галерею недоступно в Expo Go. Пропускаем...');
-            } else {
-              // В продакшене — показываем алерт
-              console.error('Ошибка сохранения в галерею:', mediaError);
-              Alert.alert('Внимание', 'Не удалось сохранить фото в галерею');
-            }
-          }
-        }
-
-        setPreviewUri(finalUri);
-        onSuccess?.(finalUri);
-        return finalUri;
-      } catch (err) {
-        console.error('Ошибка камеры:', err);
-        Alert.alert('Ошибка', err instanceof Error ? err.message : 'Не удалось сделать фото');
-        return null;
-      } finally {
-        setIsCapturing(false);
-      }
-    },
-    [hasCameraPermission, hasMediaPermission, requestAllPermissions],
-  );
+      console.warn('takePictureAsync returned no URI:', photo);
+      return null;
+    } catch (error) {
+      console.error('Ошибка при съёмке:', error);
+      throw error;
+    } finally {
+      setIsCapturing(false);
+    }
+  }, [isCameraReady, onPhotoCaptured]);
 
   const reset = useCallback(() => {
     setPreviewUri(null);
     setIsCameraReady(false);
+    setIsCapturing(false);
   }, []);
 
   return {
-    isCapturing,
-    isCameraReady,
+    cameraRef,
+
+    // Состояния
     previewUri,
     cameraType,
-    cameraRef,
+    isCameraReady,
+    isCapturing,
+    setIsCapturing,
 
     // Права
     hasCameraPermission,
-    hasMediaPermission,
 
     // Действия
-    takePhoto,
     reset,
     toggleCameraType,
     requestPermissions: requestAllPermissions,
+    onCameraNotReady: handleCameraNotReady,
     onCameraReady: handleCameraReady,
-    setPreviewUri: (uri: string) => {
-      setPreviewUri(uri);
-    },
+    takePicture, // ← новая функция для съёмки
+    setPreviewUri: (uri: string) => setPreviewUri(uri),
   };
 };

@@ -1,5 +1,5 @@
 // Hooks
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 // Core components
 import {
@@ -12,6 +12,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from 'react-native';
 
@@ -71,12 +72,30 @@ export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => 
   const c = useColors();
   const styles = useMemo(() => makeStyles(c), [c]);
 
+  useLayoutEffect(() => {
+    const parent = navigation.getParent();
+    if (parent) {
+      parent.setOptions({ tabBarStyle: { display: 'none' } });
+    }
+
+    return () => {
+      if (parent) {
+        parent.setOptions({ tabBarStyle: { display: 'flex' } });
+      }
+    };
+  }, [navigation]);
+
   const params = route.params;
   const mode = params.mode;
   const noteId = mode === 'edit' ? params.noteId : undefined;
 
   // === Хуки для вложений ===
-  const camera = useCameraAttachment();
+  const camera = useCameraAttachment({
+    onPhotoCaptured: () => {
+      camera.onCameraNotReady();
+      setIsCameraActive(false);
+    },
+  });
   const audio = useAudioAttachment();
   const location = useLocationAttachment();
 
@@ -93,27 +112,7 @@ export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => 
 
   const handleTakePhoto = useCallback(async () => {
     setIsCameraActive(true);
-    // 📷 CameraView смонтируется, вызовет onCameraReady, который сделает снимок
   }, []);
-
-  // Функция, которая вызывается когда камера готова
-  const handleCameraReady = useCallback(async () => {
-    // Небольшая задержка для фокусировки
-    await new Promise((resolve) => setTimeout(resolve, 200));
-
-    try {
-      await camera.takePhoto({
-        saveToGallery: false,
-        quality: 0.8,
-        onSuccess: () => {
-          setIsCameraActive(false);
-        },
-      });
-    } catch (err) {
-      setIsCameraActive(false);
-      console.error('Ошибка съёмки:', err);
-    }
-  }, [camera]);
 
   // === Загрузка заметки ===
   const loadNote = useCallback(async (id: number) => {
@@ -148,6 +147,12 @@ export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => 
       setIsLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (camera.previewUri && isCameraActive) {
+      setIsCameraActive(false);
+    }
+  }, [camera.previewUri, isCameraActive]);
 
   useEffect(() => {
     if ((mode === 'edit' || mode === 'view') && noteId) {
@@ -265,19 +270,6 @@ export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => 
       // 2. Сохраняем детальные данные вложений (если есть)
       const attachments = getCurrentAttachments();
 
-      // 🔥 ЛОГ 2: что вернул getCurrentAttachments
-      console.log('💾 [SAVE] getCurrentAttachments():', {
-        photo: attachments.photo,
-        photoUri: attachments.photoUri,
-        audio: attachments.audio, // 👈 ключевое: true/false?
-        audioUri: attachments.audioUri, // 👈 есть ли путь?
-        audioDuration: attachments.audioDuration,
-        location: attachments.location,
-        latitude: attachments.latitude,
-        longitude: attachments.longitude,
-        address: attachments.address,
-      });
-
       const normalizeAttachments = (draft: AttachmentDraft): Attachment => ({
         photo: draft.photo ?? false,
         photoUri: draft.photoUri,
@@ -390,8 +382,8 @@ export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => 
           <View style={styles.actionsRow}>
             {/* 📷 Фото */}
             <ActionBtn
-              label={camera.previewUri ? '✅ Фото' : camera.isCapturing ? '⏳...' : '📷 Фото'}
-              disabled={camera.isCapturing || isCameraActive}
+              label={camera.previewUri ? '✅ Фото' : camera.isCameraReady ? '⏳...' : '📷 Фото'}
+              disabled={camera.isCameraReady || isCameraActive}
               onPress={async () => {
                 if (camera.previewUri) {
                   // 1. Сброс хука
@@ -537,20 +529,56 @@ export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => 
 
       {/* 🔥 Скрытая камера для съёмки */}
       {isCameraActive && (
-        <CameraView
-          ref={camera.cameraRef}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            zIndex: -1, // 👈 Позади контента
-            opacity: 0, // 👈 Невидимая
-          }}
-          facing={camera.cameraType}
-          onCameraReady={handleCameraReady}
-        />
+        <View style={styles.cameraOverlay}>
+          {/* Если разрешение ещё не запрошено или не получено */}
+          {!camera.hasCameraPermission ? (
+            <View style={styles.permissionContainer}>
+              <Text style={styles.permissionText}>📷 Доступ к камере</Text>
+              <Text style={styles.permissionSubtext}>Нужен доступ к камере для создания фото</Text>
+              <TouchableOpacity style={styles.permissionBtn} onPress={camera.requestPermissions}>
+                <Text style={styles.permissionBtnText}>Разрешить</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.permissionBtn, styles.permissionBtnSecondary]}
+                onPress={() => setIsCameraActive(false)}
+              >
+                <Text style={styles.permissionBtnTextSecondary}>Отмена</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            // ✅ Разрешение есть — показываем камеру
+            <>
+              <CameraView
+                ref={(ref) => {
+                  camera.cameraRef.current = ref;
+                }}
+                facing={camera.cameraType}
+                style={styles.camera}
+                onCameraReady={camera.onCameraReady}
+                onMountError={(err) => {
+                  console.error('Camera mount error:', err);
+                  Alert.alert('Ошибка камеры', 'Не удалось запустить камеру');
+                  setIsCameraActive(false);
+                }}
+              />
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity style={styles.button} onPress={camera.toggleCameraType}>
+                  <Text style={styles.text}>🔄</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.shutterButton}
+                  onPress={camera.takePicture}
+                  disabled={camera.isCapturing}
+                >
+                  <View style={[styles.shutterInner, camera.isCapturing && { opacity: 0.6 }]} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.button} onPress={() => setIsCameraActive(false)}>
+                  <Text style={styles.text}>✕</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+        </View>
       )}
 
       {/* === Футер с кнопками === */}
@@ -595,6 +623,127 @@ const makeStyles = (c: ReturnType<typeof useColors>) =>
       paddingBottom: 24,
     },
 
+    // === Стили для оверлея камеры ===
+    cameraOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: 'black',
+      zIndex: 100,
+    },
+
+    permissionContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 24,
+      gap: 16,
+    },
+
+    permissionText: {
+      fontSize: 20,
+      fontWeight: '700',
+      color: 'white',
+    },
+
+    permissionSubtext: {
+      fontSize: 14,
+      color: '#ccc',
+      textAlign: 'center',
+      lineHeight: 20,
+    },
+
+    buttonContainer: {
+      position: 'absolute',
+      bottom: 48,
+      left: 0,
+      right: 0,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 32,
+      backgroundColor: 'transparent',
+    },
+
+    iconButton: {
+      width: 50,
+      height: 50,
+      borderRadius: 25,
+      backgroundColor: 'rgba(255,255,255,0.2)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+
+    iconText: {
+      fontSize: 24,
+      color: 'white',
+    },
+
+    shutterButton: {
+      width: 70,
+      height: 70,
+      borderRadius: 35,
+      backgroundColor: 'transparent',
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 4,
+      borderColor: 'white',
+    },
+
+    shutterInner: {
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      backgroundColor: 'white',
+    },
+
+    permissionBtn: {
+      backgroundColor: c.primary,
+      paddingHorizontal: 24,
+      paddingVertical: 12,
+      borderRadius: 12,
+      minWidth: 140,
+      alignItems: 'center',
+    },
+
+    permissionBtnText: {
+      color: 'white',
+      fontWeight: '700',
+      fontSize: 16,
+    },
+
+    permissionBtnSecondary: {
+      backgroundColor: 'transparent',
+      borderWidth: 1,
+      borderColor: '#666',
+    },
+
+    permissionBtnTextSecondary: {
+      color: '#ccc',
+      fontWeight: '700',
+      fontSize: 16,
+    },
+
+    // === Обновлённые стили для камеры ===
+    camera: {
+      flex: 1,
+      width: '100%',
+      height: '100%',
+    },
+
+    button: {
+      width: 50,
+      height: 50,
+      borderRadius: 25,
+      backgroundColor: 'rgba(255,255,255,0.2)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+
+    text: {
+      fontSize: 20,
+      color: 'white',
+      fontWeight: '600',
+    },
+
     h1: {
       fontSize: 22,
       fontWeight: '800',
@@ -628,21 +777,8 @@ const makeStyles = (c: ReturnType<typeof useColors>) =>
     },
 
     cameraContainer: {
-      marginTop: 12,
-      marginBottom: 12,
-      borderRadius: 12,
-      overflow: 'hidden',
-      backgroundColor: c.bg,
-      borderWidth: 1,
-      borderColor: c.border,
-      alignItems: 'center',
+      flex: 1,
       justifyContent: 'center',
-    },
-
-    cameraPreview: {
-      width: '100%',
-      height: 240,
-      backgroundColor: '#000',
     },
 
     // Кнопки вложений
