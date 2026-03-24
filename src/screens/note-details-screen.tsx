@@ -1,8 +1,8 @@
 // Core components
-import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 // Hooks
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 // Components
 import { Chip } from '@/src/components/chip';
@@ -12,7 +12,7 @@ import { NotesStackScreenProps } from '@/src/types/navigation';
 import { Note } from '@/src/types/note';
 
 // Database
-import { getNoteById, deleteNote } from '@/src/db/repositories/notesRepository';
+import { deleteNote, getNoteById } from '@/src/db/repositories/notesRepository';
 
 // Helpers
 import { confirmAction } from '@/src/utils/confirm';
@@ -82,7 +82,11 @@ export const NoteDetailsScreen = (props: NotesStackScreenProps<'NoteDetails'>) =
   const { title, text, attachment } = note;
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: 40 }}
+      keyboardShouldPersistTaps="handled"
+    >
       <Text style={styles.title}>{title || 'Без названия'}</Text>
       <Text style={styles.text}>{text || '—'}</Text>
 
@@ -106,7 +110,7 @@ export const NoteDetailsScreen = (props: NotesStackScreenProps<'NoteDetails'>) =
       >
         <Text style={styles.deleteBtnText}>Удалить</Text>
       </Pressable>
-    </View>
+    </ScrollView>
   );
 };
 

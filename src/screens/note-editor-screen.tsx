@@ -9,6 +9,7 @@ import {
   Image,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -120,41 +121,38 @@ export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => 
   }, []);
 
   // === Загрузка заметки ===
-  const loadNote = useCallback(
-    async (id: number) => {
-      try {
-        const note = await getNoteById(id);
-        if (note) {
-          setOriginalNote(note);
-          setTitle(note.title);
-          setText(note.text ?? '');
+  const loadNote = useCallback(async (id: number) => {
+    try {
+      const note = await getNoteById(id);
+      if (note) {
+        setOriginalNote(note);
+        setTitle(note.title);
+        setText(note.text ?? '');
 
-          const attachment = await getAttachmentByNoteId(id);
-          setLoadedAttachments(attachment);
+        const attachment = await getAttachmentByNoteId(id);
+        setLoadedAttachments(attachment);
 
-          if (attachment?.photoUri) {
-            camera.setPreviewUri(attachment.photoUri);
-          }
-          if (attachment?.audioUri) {
-            audio.setPreviewUri(attachment.audioUri, attachment.audioDuration ?? undefined);
-          }
-          if (attachment?.location && attachment.latitude && attachment.longitude) {
-            location.setLocationData({
-              latitude: attachment.latitude,
-              longitude: attachment.longitude,
-              address: attachment.address ?? undefined,
-            });
-          }
+        if (attachment?.photoUri) {
+          camera.setPreviewUri(attachment.photoUri);
         }
-      } catch (error) {
-        console.error('Ошибка загрузки заметки:', error);
-        Alert.alert('Ошибка', 'Не удалось загрузить заметку');
-      } finally {
-        setIsLoading(false);
+        if (attachment?.audioUri) {
+          audio.setPreviewUri(attachment.audioUri, attachment.audioDuration ?? undefined);
+        }
+        if (attachment?.location && attachment.latitude && attachment.longitude) {
+          location.setLocationData({
+            latitude: attachment.latitude,
+            longitude: attachment.longitude,
+            address: attachment.address ?? undefined,
+          });
+        }
       }
-    },
-    [audio, camera, location],
-  );
+    } catch (error) {
+      console.error('Ошибка загрузки заметки:', error);
+      Alert.alert('Ошибка', 'Не удалось загрузить заметку');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (camera.previewUri && isCameraActive) {
@@ -375,7 +373,11 @@ export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => 
   const isEditMode = mode === 'edit';
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: 40 }}
+      keyboardShouldPersistTaps="handled"
+    >
       <Text style={styles.h1}>
         {isViewMode ? 'Просмотр' : isEditMode ? 'Редактирование' : 'Новая заметка'}
       </Text>
@@ -414,11 +416,7 @@ export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => 
               onPress={() => setReminderAt(new Date(Date.now() + 60_000))}
             />
 
-            <ActionBtn
-              label="Убрать"
-              onPress={() => setReminderAt(null)}
-              disabled={!reminderAt}
-            />
+            <ActionBtn label="Убрать" onPress={() => setReminderAt(null)} disabled={!reminderAt} />
           </View>
 
           <Text style={styles.previewText}>
@@ -658,7 +656,7 @@ export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => 
           </Pressable>
         )}
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
