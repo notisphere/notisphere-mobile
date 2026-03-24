@@ -12,7 +12,7 @@ import { NotesStackScreenProps } from '@/src/types/navigation';
 import { Note } from '@/src/types/note';
 
 // Database
-import { getNoteById, deleteNote } from '@/src/db/notesRepository';
+import { getNoteById, deleteNote } from '@/src/db/repositories/notesRepository';
 
 // Helpers
 import { confirmAction } from '@/src/utils/confirm';

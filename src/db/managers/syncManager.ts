@@ -1,12 +1,12 @@
 // Repositories
-import { getAllNotes, saveNote } from './notesRepository';
+import { getAllNotes, saveNote } from '../repositories/notesRepository';
 
 // State
 import { getAppState, saveAppState } from './stateManager';
 import { StateKeys } from '@/src/db/stateKeys';
 
 // Types
-import { AppSettings, ExportedData, SyncResult } from './types';
+import { AppSettings, ExportedData, SyncResult } from '../types';
 import { Note } from '@/src/types/note';
 
 /**

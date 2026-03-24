@@ -9,20 +9,34 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Приложение использует камеру для прикрепления фото к заметкам",
+        "NSMicrophoneUsageDescription": "Приложение использует микрофон для голосовых заметок",
+        "NSLocationWhenInUseUsageDescription": "Приложение добавляет геотеги к заметкам",
+        "NSPhotoLibraryAddUsageDescription": "Приложение сохраняет фото в галерею"
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "ACCESS_FINE_LOCATION",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ],
+      "package": "com.fuzikort.notispheremobile"
     },
     "web": {
-      "output": "single"
+      "output": "single",
+      "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       [
@@ -36,11 +50,28 @@
             "backgroundColor": "#000000"
           }
         }
+      ],
+      "expo-sqlite",
+      "expo-audio",
+      "expo-asset",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
+          "recordAudioAndroid": true,
+          "barcodeScannerEnabled": true
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "9c764e47-9534-4c92-9112-966ea25ec2d0"
+      }
     }
   }
 }

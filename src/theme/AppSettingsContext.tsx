@@ -5,7 +5,7 @@ import React, { createContext, useCallback, useContext, useMemo, useState } from
 import type { AppSettings } from '@/src/db/types';
 
 // State
-import { saveAppState } from '@/src/db/stateManager';
+import { saveAppState } from '@/src/db/managers/stateManager';
 import { StateKeys } from '@/src/db/stateKeys';
 
 /** Контекст состояния приложения */
