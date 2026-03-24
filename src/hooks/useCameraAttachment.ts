@@ -78,7 +78,7 @@ export const useCameraAttachment = ({ onPhotoCaptured }: UseCameraAttachmentProp
     } finally {
       setIsCapturing(false);
     }
-  }, [isCameraReady, onPhotoCaptured]);
+  }, [isCameraReady, isCapturing, onPhotoCaptured]);
 
   const reset = useCallback(() => {
     setPreviewUri(null);

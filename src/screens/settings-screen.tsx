@@ -1,5 +1,5 @@
 // Core components
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
 
 // Views
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,6 +13,10 @@ import { useAppSettings } from '@/src/theme/AppSettingsContext';
 // Theme
 import { useColors } from '@/src/theme/useColors';
 
+// Firebase
+import { auth } from '@/src/firebase';
+import { logout } from '@/src/firebase/auth';
+
 /** Экран настроек приложения */
 export const SettingsScreen = () => {
   const { appSettings, setTheme } = useAppSettings();
@@ -20,9 +24,18 @@ export const SettingsScreen = () => {
   const c = useColors();
   const styles = useMemo(() => makeStyles(c), [c]);
 
-  // Выбор текущей темы приложения
   const isLight = appSettings.theme === 'light';
   const isDark = appSettings.theme === 'dark';
+
+  const currentEmail = auth.currentUser?.email ?? 'Нет данных';
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error: any) {
+      Alert.alert('Ошибка', error.message ?? 'Не удалось выйти из аккаунта');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
@@ -50,6 +63,20 @@ export const SettingsScreen = () => {
 
           <Text style={styles.hint}>Тема сохраняется и восстановится при следующем запуске.</Text>
         </View>
+
+        <View style={styles.card}>
+          <Text style={styles.rowTitle}>Аккаунт</Text>
+
+          <Text style={styles.label}>Текущая почта</Text>
+          <Text style={styles.value}>{currentEmail}</Text>
+
+          <Pressable
+            onPress={handleLogout}
+            style={({ pressed }) => [styles.primaryBtn, pressed && { opacity: 0.7 }]}
+          >
+            <Text style={styles.primaryBtnText}>Выйти из аккаунта</Text>
+          </Pressable>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -58,8 +85,18 @@ export const SettingsScreen = () => {
 const makeStyles = (c: ReturnType<typeof useColors>) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: c.surface },
-    container: { flex: 1, padding: 14, backgroundColor: c.surface },
-    title: { fontSize: 20, fontWeight: '800', marginBottom: 12, color: c.text },
+    container: {
+      flex: 1,
+      padding: 14,
+      gap: 12,
+      backgroundColor: c.surface,
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: '800',
+      marginBottom: 4,
+      color: c.text,
+    },
     card: {
       borderWidth: 1,
       borderColor: c.border,
@@ -67,8 +104,23 @@ const makeStyles = (c: ReturnType<typeof useColors>) =>
       padding: 12,
       backgroundColor: c.surface,
     },
-    rowTitle: { fontSize: 16, fontWeight: '700', marginBottom: 10, color: c.text },
-    row: { flexDirection: 'row', gap: 10 },
+    cardDanger: {
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 14,
+      padding: 12,
+      backgroundColor: c.surface,
+    },
+    rowTitle: {
+      fontSize: 16,
+      fontWeight: '700',
+      marginBottom: 10,
+      color: c.text,
+    },
+    row: {
+      flexDirection: 'row',
+      gap: 10,
+    },
     btn: {
       flex: 1,
       borderWidth: 1,
@@ -78,8 +130,60 @@ const makeStyles = (c: ReturnType<typeof useColors>) =>
       alignItems: 'center',
       backgroundColor: c.bg,
     },
-    btnActive: { borderColor: c.text },
-    btnText: { fontWeight: '700', color: c.textMuted },
-    btnTextActive: { fontWeight: '900', color: c.text },
-    hint: { marginTop: 10, color: c.textMuted },
+    btnActive: {
+      borderColor: c.text,
+    },
+    btnText: {
+      fontWeight: '700',
+      color: c.textMuted,
+    },
+    btnTextActive: {
+      fontWeight: '900',
+      color: c.text,
+    },
+    hint: {
+      marginTop: 10,
+      color: c.textMuted,
+    },
+    label: {
+      marginBottom: 6,
+      color: c.textMuted,
+    },
+    value: {
+      marginBottom: 12,
+      color: c.text,
+      fontWeight: '600',
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 12,
+      padding: 12,
+      marginBottom: 12,
+      color: c.text,
+      backgroundColor: c.bg,
+    },
+    primaryBtn: {
+      borderRadius: 12,
+      paddingVertical: 12,
+      alignItems: 'center',
+      backgroundColor: c.text,
+    },
+    primaryBtnText: {
+      color: c.bg,
+      fontWeight: '700',
+    },
+    dangerBtn: {
+      borderRadius: 12,
+      paddingVertical: 12,
+      alignItems: 'center',
+      backgroundColor: c.text,
+    },
+    dangerBtnText: {
+      color: c.bg,
+      fontWeight: '700',
+    },
+    disabledBtn: {
+      opacity: 0.6,
+    },
   });
