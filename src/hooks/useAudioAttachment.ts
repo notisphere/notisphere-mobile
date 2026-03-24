@@ -180,7 +180,7 @@ export const useAudioAttachment = () => {
       try {
         player.pause();
         player.seekTo(0);
-      } catch (e) {
+      } catch {
         // Игнорируем ошибки, если плеер уже освобождён
       }
     }

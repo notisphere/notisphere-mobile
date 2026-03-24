@@ -23,5 +23,17 @@ export default defineConfig([
       '@typescript-eslint/no-unused-vars': 'warn',
       'prettier/prettier': ['error', { singleQuote: true, semi: true }],
     },
+    settings: {
+      'import/resolver': {
+        node: {
+          paths: ['.'],
+          extensions: ['.js', '.jsx', '.ts', '.tsx'],
+        },
+        alias: {
+          map: [['@env', './.env']],
+          extensions: ['.js', '.jsx', '.ts', '.tsx'],
+        },
+      },
+    },
   },
 ]);

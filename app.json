@@ -9,6 +9,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
+      "bundleIdentifier": "com.a1unade.notispheremobile",
       "supportsTablet": true,
       "infoPlist": {
         "NSCameraUsageDescription": "Приложение использует камеру для прикрепления фото к заметкам",
@@ -54,6 +55,7 @@
       "expo-sqlite",
       "expo-audio",
       "expo-asset",
+      "expo-notifications",
       [
         "expo-camera",
         {

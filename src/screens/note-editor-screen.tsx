@@ -41,6 +41,9 @@ import { useLocationAttachment } from '@/src/hooks/useLocationAttachment';
 import { Attachment } from '@/src/types/attachment';
 import { CameraView } from 'expo-camera';
 
+// Services
+import { scheduleNoteReminder } from '@/src/services/notifications';
+
 /** Кнопка для взаимодействия с заметкой */
 function ActionBtn(props: {
   label: string;
@@ -71,6 +74,8 @@ export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => 
   const { route, navigation } = props;
   const c = useColors();
   const styles = useMemo(() => makeStyles(c), [c]);
+
+  const [reminderAt, setReminderAt] = useState<Date | null>(null);
 
   useLayoutEffect(() => {
     const parent = navigation.getParent();
@@ -115,38 +120,41 @@ export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => 
   }, []);
 
   // === Загрузка заметки ===
-  const loadNote = useCallback(async (id: number) => {
-    try {
-      const note = await getNoteById(id);
-      if (note) {
-        setOriginalNote(note);
-        setTitle(note.title);
-        setText(note.text ?? '');
+  const loadNote = useCallback(
+    async (id: number) => {
+      try {
+        const note = await getNoteById(id);
+        if (note) {
+          setOriginalNote(note);
+          setTitle(note.title);
+          setText(note.text ?? '');
 
-        const attachment = await getAttachmentByNoteId(id);
-        setLoadedAttachments(attachment);
+          const attachment = await getAttachmentByNoteId(id);
+          setLoadedAttachments(attachment);
 
-        if (attachment?.photoUri) {
-          camera.setPreviewUri(attachment.photoUri);
+          if (attachment?.photoUri) {
+            camera.setPreviewUri(attachment.photoUri);
+          }
+          if (attachment?.audioUri) {
+            audio.setPreviewUri(attachment.audioUri, attachment.audioDuration ?? undefined);
+          }
+          if (attachment?.location && attachment.latitude && attachment.longitude) {
+            location.setLocationData({
+              latitude: attachment.latitude,
+              longitude: attachment.longitude,
+              address: attachment.address ?? undefined,
+            });
+          }
         }
-        if (attachment?.audioUri) {
-          audio.setPreviewUri(attachment.audioUri, attachment.audioDuration ?? undefined);
-        }
-        if (attachment?.location && attachment.latitude && attachment.longitude) {
-          location.setLocationData({
-            latitude: attachment.latitude,
-            longitude: attachment.longitude,
-            address: attachment.address ?? undefined,
-          });
-        }
+      } catch (error) {
+        console.error('Ошибка загрузки заметки:', error);
+        Alert.alert('Ошибка', 'Не удалось загрузить заметку');
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Ошибка загрузки заметки:', error);
-      Alert.alert('Ошибка', 'Не удалось загрузить заметку');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    },
+    [audio, camera, location],
+  );
 
   useEffect(() => {
     if (camera.previewUri && isCameraActive) {
@@ -267,6 +275,16 @@ export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => 
 
       const savedNoteId = await saveNote(note);
 
+      // Пуш-уведомление
+      if (reminderAt) {
+        await scheduleNoteReminder({
+          noteId: savedNoteId,
+          title: title.trim(),
+          body: text.trim() || 'Напоминание о заметке',
+          triggerDate: reminderAt,
+        });
+      }
+
       // 2. Сохраняем детальные данные вложений (если есть)
       const attachments = getCurrentAttachments();
 
@@ -304,7 +322,18 @@ export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => 
       console.error('Ошибка сохранения заметки:', error);
       Alert.alert('Ошибка', 'Не удалось сохранить заметку');
     }
-  }, [mode, originalNote, title, text, camera, audio, location, navigation, getCurrentAttachments]);
+  }, [
+    mode,
+    originalNote,
+    title,
+    text,
+    camera,
+    audio,
+    location,
+    navigation,
+    getCurrentAttachments,
+    reminderAt,
+  ]);
 
   // === Режим просмотра: редактирование ===
   const handleEditPress = useCallback(() => {
@@ -375,9 +404,29 @@ export const NoteEditorScreen = (props: NotesStackScreenProps<'NoteEditor'>) => 
         textAlignVertical="top"
       />
 
-      {/* === Вложения === */}
       {!isViewMode && (
         <>
+          <Text style={styles.label}>Напоминание</Text>
+
+          <View style={styles.actionsRow}>
+            <ActionBtn
+              label={reminderAt ? 'Через 1 минуту' : 'Через 1 минуту'}
+              onPress={() => setReminderAt(new Date(Date.now() + 60_000))}
+            />
+
+            <ActionBtn
+              label="Убрать"
+              onPress={() => setReminderAt(null)}
+              disabled={!reminderAt}
+            />
+          </View>
+
+          <Text style={styles.previewText}>
+            {reminderAt
+              ? `Напоминание: ${reminderAt.toLocaleString()}`
+              : 'Напоминание не установлено'}
+          </Text>
+
           <Text style={styles.label}>Добавить</Text>
           <View style={styles.actionsRow}>
             {/* 📷 Фото */}

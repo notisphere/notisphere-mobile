@@ -1,11 +1,13 @@
 // Core
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useEffect, useState } from 'react';
 
 // Screens
 import { HomeScreen } from '../screens/home-screen';
 import { NoteDetailsScreen } from '../screens/note-details-screen';
 import { NoteEditorScreen } from '../screens/note-editor-screen';
+import { AuthScreen } from '../screens/auth-screen';
 
 // Additional screens
 import { WeatherScreen } from '../screens/weather-screen';
@@ -13,6 +15,10 @@ import { SettingsScreen } from '../screens/settings-screen';
 
 // Types
 import { NotesStackParamList, RootTabParamList } from '@/src/types/navigation';
+
+// Firebase auth
+import { onAuthStateChanged, User } from 'firebase/auth';
+import { auth } from '@/src/firebase';
 
 // Elements
 const Tab = createBottomTabNavigator<RootTabParamList>();
@@ -39,6 +45,24 @@ const HomeStack = () => {
 
 /** Нижний бар для навигации в приложении */
 export const RootNavigator = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    return onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) {
+    return null;
+  }
+
+  if (!user) {
+    return <AuthScreen />;
+  }
+
   return (
     <Tab.Navigator screenOptions={{ headerShown: false }}>
       <Tab.Screen name="NotesTab" component={HomeStack} options={{ title: 'Заметки' }} />

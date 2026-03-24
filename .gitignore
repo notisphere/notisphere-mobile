@@ -10,6 +10,8 @@ lerna-debug.log*
 .expo/
 web-build/
 .DS_Store
+.env
+ios/
 
 # React Native
 android/.gradle/
