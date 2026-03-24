@@ -6,7 +6,6 @@ import {
   Alert,
   FlatList,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -110,11 +109,7 @@ export const HomeScreen = ({ navigation }: NotesStackScreenProps<'Home'>) => {
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={{ paddingBottom: 40 }}
-      keyboardShouldPersistTaps="handled"
-    >
+    <View style={styles.container}>
       <View style={styles.topRow}>
         <Text style={styles.h1}>Умный блокнот</Text>
         <Pressable
@@ -147,7 +142,7 @@ export const HomeScreen = ({ navigation }: NotesStackScreenProps<'Home'>) => {
           </View>
         }
       />
-    </ScrollView>
+    </View>
   );
 };
 
